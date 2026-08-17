@@ -1,26 +1,32 @@
 @import "tailwindcss";
 
 :root {
-  --background: #0d2f2c;       /* deep night-teal, mosque courtyard at dusk */
-  --background-elevated: #123c37;
-  --foreground: #f4efe3;       /* warm off-white, like old manuscript paper */
-  --muted: #a9c4bb;            /* muted sage for secondary text */
-  --accent: #cfa130;           /* brass/gold, mosque dome accent */
-  --accent-soft: #cfa13033;
-  --border: #1d4c46;
-  --jamaat: #3f8f6f;
-  --infiraadi: #6b8fa3;
-  --qaza: #b45444;
+  --background: #0a2e22;         /* deep forest emerald */
+  --background-elevated: #12392a; /* card surface */
+  --background-elevated-hover: #17452f;
+  --foreground: #f6efe0;          /* warm ivory */
+  --muted: #a3c2ab;                /* sage */
+  --accent: #d4a72c;               /* rich brass gold */
+  --accent-bright: #e8c158;
+  --accent-soft: #d4a72c26;
+  --border: #234a37;
+  --border-gold: #d4a72c4d;
+  --jamaat: #4fa87f;
+  --infiraadi: #7fa3c9;
+  --qaza: #c9663f;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-background-elevated: var(--background-elevated);
+  --color-background-elevated-hover: var(--background-elevated-hover);
   --color-foreground: var(--foreground);
   --color-muted: var(--muted);
   --color-accent: var(--accent);
+  --color-accent-bright: var(--accent-bright);
   --color-accent-soft: var(--accent-soft);
   --color-border: var(--border);
+  --color-border-gold: var(--border-gold);
   --color-jamaat: var(--jamaat);
   --color-infiraadi: var(--infiraadi);
   --color-qaza: var(--qaza);
@@ -29,7 +35,9 @@
 }
 
 body {
-  background: var(--background);
+  background:
+    radial-gradient(ellipse 900px 500px at 50% -10%, #123c2b 0%, transparent 60%),
+    var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
 }
