@@ -1,65 +1,95 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useState } from "react";
+import { PrayerCard } from "@/components/PrayerCard";
+import { StarMotif } from "@/components/StarMotif";
+import { PRAYER_NAMES, type PrayerName, type PrayerStatus } from "@/lib/types";
+
+function todayString(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function prettyDate(date: string): string {
+  return new Date(date + "T00:00:00").toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
 
 export default function Home() {
+  const [date] = useState(todayString());
+  const [entries, setEntries] = useState<Partial<Record<PrayerName, PrayerStatus>>>({});
+  const [loading, setLoading] = useState(true);
+  const [savingPrayer, setSavingPrayer] = useState<PrayerName | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/prayers?date=${date}`)
+      .then((res) => res.json())
+      .then((data) => setEntries(data.entries ?? {}))
+      .finally(() => setLoading(false));
+  }, [date]);
+
+  async function handleSelect(prayer: PrayerName, status: PrayerStatus) {
+    setSavingPrayer(prayer);
+    setEntries((prev) => ({ ...prev, [prayer]: status }));
+
+    try {
+      await fetch("/api/prayers", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date, prayer, status }),
+      });
+    } finally {
+      setSavingPrayer(null);
+    }
+  }
+
+  const recordedCount = Object.keys(entries).length;
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
+    <main className="flex-1 flex flex-col items-center px-4 py-12 sm:py-16">
+      <div className="w-full max-w-2xl">
+        <header className="text-center mb-10 relative">
+          <StarMotif className="w-10 h-10 text-accent mx-auto mb-4 opacity-80" />
+          <h1 className="font-display text-4xl sm:text-5xl text-foreground mb-2">
+            Amaal Tracker
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+          <p className="text-muted">Apni panchon namazon ka roz ka hisaab rakhein</p>
+          <p className="text-sm text-accent mt-3">{prettyDate(date)}</p>
+        </header>
+
+        {loading ? (
+          <p className="text-center text-muted">Loading...</p>
+        ) : (
+          <>
+            <div className="flex justify-center mb-6">
+              <span className="text-xs uppercase tracking-wide text-muted border border-border rounded-full px-3 py-1">
+                {recordedCount} / {PRAYER_NAMES.length} recorded today
+              </span>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              {PRAYER_NAMES.map((prayer) => (
+                <PrayerCard
+                  key={prayer}
+                  prayer={prayer}
+                  status={entries[prayer]}
+                  saving={savingPrayer === prayer}
+                  onSelect={handleSelect}
+                />
+              ))}
+            </div>
+          </>
+        )}
+
+        <footer className="mt-14 flex items-center justify-center gap-3 text-muted">
+          <StarMotif className="w-4 h-4" />
+          <p className="text-xs">Selection auto-saves — koi submit button ki zaroorat nahi</p>
+          <StarMotif className="w-4 h-4" />
+        </footer>
+      </div>
+    </main>
   );
 }
