@@ -1,0 +1,103 @@
+@import "tailwindcss";
+
+:root {
+  --background: #faf8f2;
+  --foreground: #16241f;
+
+  --color-surface: #ffffff;
+  --color-surface-muted: #f3efe3;
+
+  --color-primary-50: #e9f4ee;
+  --color-primary-100: #cbe6d7;
+  --color-primary-400: #1f7a54;
+  --color-primary-500: #0f6b48;
+  --color-primary-600: #0b543a;
+  --color-primary-700: #083f2b;
+
+  --color-gold-100: #f7ecc6;
+  --color-gold-400: #d4af37;
+  --color-gold-500: #bf9526;
+  --color-gold-600: #8f6f1c;
+
+  --color-status-jamaat: #0f6b48;
+  --color-status-infradi: #b8860b;
+  --color-status-qaza: #b3413a;
+  --color-status-empty: #d8d2c2;
+
+  --color-border: #e6e0cf;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-surface: var(--color-surface);
+  --color-surface-muted: var(--color-surface-muted);
+
+  --color-primary-50: var(--color-primary-50);
+  --color-primary-100: var(--color-primary-100);
+  --color-primary-400: var(--color-primary-400);
+  --color-primary-500: var(--color-primary-500);
+  --color-primary-600: var(--color-primary-600);
+  --color-primary-700: var(--color-primary-700);
+
+  --color-gold-100: var(--color-gold-100);
+  --color-gold-400: var(--color-gold-400);
+  --color-gold-500: var(--color-gold-500);
+  --color-gold-600: var(--color-gold-600);
+
+  --color-status-jamaat: var(--color-status-jamaat);
+  --color-status-infradi: var(--color-status-infradi);
+  --color-status-qaza: var(--color-status-qaza);
+  --color-status-empty: var(--color-status-empty);
+
+  --color-border: var(--color-border);
+
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0c1613;
+    --foreground: #eef4f0;
+
+    --color-surface: #101f1a;
+    --color-surface-muted: #16281f;
+
+    --color-primary-50: #14281f;
+    --color-primary-100: #1a3327;
+    --color-primary-400: #2f9c6c;
+    --color-primary-500: #3aad7a;
+    --color-primary-600: #58c290;
+    --color-primary-700: #86d6ac;
+
+    --color-gold-100: #2b2412;
+    --color-gold-400: #e0bc4d;
+    --color-gold-500: #f0cd63;
+    --color-gold-600: #f6da8c;
+
+    --color-status-jamaat: #3aad7a;
+    --color-status-infradi: #e0bc4d;
+    --color-status-qaza: #dd766f;
+    --color-status-empty: #29352f;
+
+    --color-border: #223229;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+}
+
+.arabesque-divider {
+  background-image: radial-gradient(
+    circle,
+    var(--color-gold-400) 1px,
+    transparent 1.5px
+  );
+  background-size: 10px 10px;
+}
