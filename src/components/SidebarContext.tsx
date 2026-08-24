@@ -26,10 +26,28 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
   );
 }
 
+const noopSidebarValue: SidebarContextValue = {
+  isOpen: false,
+  open: () => {},
+  close: () => {},
+  toggle: () => {},
+};
+
+/**
+ * Returns the sidebar state when inside a <SidebarProvider>.
+ * If used on a page that isn't wrapped in AppShell/SidebarProvider
+ * (e.g. a login or public page with no sidebar), it safely falls
+ * back to a no-op value instead of crashing the page with a 500.
+ */
 export function useSidebar() {
   const ctx = useContext(SidebarContext);
   if (!ctx) {
-    throw new Error("useSidebar must be used within a SidebarProvider");
+    if (process.env.NODE_ENV !== "production") {
+      console.warn(
+        "useSidebar() called outside a <SidebarProvider> — falling back to a disabled sidebar. Wrap this page in <AppShell> if it should have a sidebar."
+      );
+    }
+    return noopSidebarValue;
   }
   return ctx;
 }
