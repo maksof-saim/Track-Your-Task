@@ -9,6 +9,8 @@ const NAV_ITEMS = [
   { href: "/zikr", label: "Azkaar", icon: TasbihIcon },
   { href: "/tilawat", label: "Tilawat", icon: BookIcon },
   { href: "/hifazat", label: "Hifazat", icon: ShieldIcon },
+  { href: "/read", label: "Read", icon: BookIcon },
+
 ];
 
 export default function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
@@ -28,16 +30,14 @@ export default function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
           <Link
             key={href}
             href={href}
-            className={`group flex flex-col items-center gap-1 rounded-xl px-2 py-3 text-xs font-medium transition-colors sm:flex-row sm:gap-3 sm:px-3 sm:py-2.5 sm:text-sm ${
-              active
+            className={`group flex flex-col items-center gap-1 rounded-xl px-2 py-3 text-xs font-medium transition-colors sm:flex-row sm:gap-3 sm:px-3 sm:py-2.5 sm:text-sm ${active
                 ? "bg-primary-50 text-primary-600"
                 : "text-foreground/70 hover:bg-surface-muted hover:text-foreground"
-            }`}
+              }`}
           >
             <Icon
-              className={`h-5 w-5 shrink-0 ${
-                active ? "text-primary-500" : "text-foreground/50 group-hover:text-primary-400"
-              }`}
+              className={`h-5 w-5 shrink-0 ${active ? "text-primary-500" : "text-foreground/50 group-hover:text-primary-400"
+                }`}
             />
             <span>{label}</span>
           </Link>

@@ -31,12 +31,12 @@ const CELL_STYLES: Record<string, string> = {
 export default function DashboardPage() {
   const [data, setData] = useState<Analytics | null>(null);
 
-  useEffect(() => {
+  const result = useEffect(() => {
     fetch("/api/analytics")
       .then((res) => res.json())
       .then(setData);
   }, []);
-
+  console.log(result, "result")
   return (
     <div className="mx-auto max-w-4xl">
       <div className="mb-6">
@@ -168,11 +168,10 @@ function StatCard({
   return (
     <div className="rounded-xl border border-border bg-surface p-4">
       <span
-        className={`mb-3 inline-flex rounded-full p-2 ${
-          accent === "gold"
+        className={`mb-3 inline-flex rounded-full p-2 ${accent === "gold"
             ? "bg-gold-100 text-gold-600"
             : "bg-primary-50 text-primary-500"
-        }`}
+          }`}
       >
         {icon}
       </span>
