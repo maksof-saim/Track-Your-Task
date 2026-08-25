@@ -21,7 +21,7 @@ export async function GET(request: Request) {
   });
 
   return NextResponse.json({
-    entries: logs.map((l) => ({ name: l.name, count: l.count })),
+    entries: logs.map((l) => ({ name: l.name, count: l.count, mode: l.mode })),
   });
 }
 
@@ -40,29 +40,22 @@ export async function POST(request: Request) {
     );
   }
 
-  const { date, name, delta } = parsed.data;
+  const { date, name, mode, count } = parsed.data;
   const dateValue = new Date(`${date}T00:00:00.000Z`);
-
-  const existing = await prisma.zikrLog.findUnique({
-    where: {
-      userId_date_name: { userId: session.user.id, date: dateValue, name },
-    },
-  });
-
-  const nextCount = Math.max(0, (existing?.count ?? 0) + delta);
 
   const log = await prisma.zikrLog.upsert({
     where: {
       userId_date_name: { userId: session.user.id, date: dateValue, name },
     },
-    update: { count: nextCount },
+    update: { count: mode === "COUNT" ? count : 0, mode },
     create: {
       userId: session.user.id,
       date: dateValue,
       name,
-      count: nextCount,
+      count: mode === "COUNT" ? count : 0,
+      mode,
     },
   });
 
-  return NextResponse.json({ name: log.name, count: log.count });
+  return NextResponse.json({ name: log.name, count: log.count, mode: log.mode });
 }

@@ -29,7 +29,8 @@ export const prayerLogSchema = z.object({
 export const zikrLogSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Sahi date format YYYY-MM-DD"),
   name: z.string().trim().min(1).max(80),
-  delta: z.number().int(),
+  mode: z.enum(["COUNT", "KASRAT"]),
+  count: z.number().int().min(0).max(1000000),
 });
 
 export const CHECKLIST_SECTIONS = ["TILAWAT", "HIFAZAT"] as const;

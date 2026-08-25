@@ -42,6 +42,11 @@ enum PrayerStatus {
   QAZA
 }
 
+enum ZikrMode {
+  COUNT
+  KASRAT
+}
+
 model PrayerLog {
   id        String       @id @default(cuid())
   userId    String
@@ -63,6 +68,7 @@ model ZikrLog {
   date      DateTime @db.Date
   name      String
   count     Int      @default(0)
+  mode      ZikrMode @default(COUNT)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
