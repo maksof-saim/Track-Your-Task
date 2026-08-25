@@ -11,6 +11,15 @@ export const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+export const forgotPasswordSchema = z.object({
+  email: z.string().trim().toLowerCase().email("Sahi email likhein"),
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(32),
+  password: z.string().min(8, "Password kam se kam 8 harf ka ho"),
+});
+
 export const PRAYER_NAMES = ["FAJR", "DHUHR", "ASR", "MAGHRIB", "ISHA"] as const;
 export const PRAYER_STATUSES = ["JAMAAT", "INFRADI", "QAZA"] as const;
 
