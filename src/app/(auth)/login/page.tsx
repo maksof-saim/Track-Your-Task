@@ -65,6 +65,7 @@ function LoginForm() {
             placeholder="aap@example.com"
           />
         </div>
+        <div className="-mt-2 text-right"><Link href="/forgot-password" className="text-sm font-medium text-primary-500 hover:underline">Password bhool gaye?</Link></div>
         <div>
           <label htmlFor="password" className="mb-1 block text-sm font-medium text-foreground/80">
             Password
