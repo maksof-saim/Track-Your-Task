@@ -9,11 +9,11 @@ export default async function AdminPage() {
   }
 
   return (
-    <div className="mx-auto max-w-6xl">
-      <div className="mb-6">
-        <h1 className="text-xl font-semibold text-foreground">Admin — Sab Users ka Record</h1>
-        <p className="text-sm text-foreground/60">
-          Is project mein register hone wale har user ki ibadat ka khulasa
+    <div className="mx-auto w-full max-w-7xl px-2 sm:px-4">
+      <div className="mb-4 sm:mb-6">
+        <h1 className="text-xl font-bold text-foreground sm:text-2xl">User Management</h1>
+        <p className="mt-1 text-xs text-foreground/70 sm:text-sm">
+          View and manage all registered users and their activity records
         </p>
       </div>
       <AdminUsersTable />
