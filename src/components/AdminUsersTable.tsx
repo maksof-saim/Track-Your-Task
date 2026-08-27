@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 type AdminUser = {
   id: string;
@@ -11,7 +11,6 @@ type AdminUser = {
   analytics: {
     todayLoggedCount: number;
     totalPrayers: number;
-    streak: number;
     jamaatPercent: number;
     zikrToday: number;
     tilawatToday: number;
@@ -44,14 +43,17 @@ function RoleBadge({ role }: { role: AdminUser["role"] }) {
 
 export default function AdminUsersTable() {
   const [users, setUsers] = useState<AdminUser[] | null>(null);
-  const [filteredUsers, setFilteredUsers] = useState<AdminUser[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
 
-  useEffect(() => {
-    fetch("/api/admin/users")
+  const fetchUsers = () => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.append("search", searchQuery);
+    if (dateFilter) params.append("date", dateFilter);
+
+    fetch(`/api/admin/users?${params.toString()}`)
       .then(async (res) => {
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
@@ -61,38 +63,17 @@ export default function AdminUsersTable() {
       })
       .then((data) => {
         setUsers(data.users);
-        setFilteredUsers(data.users);
       })
       .catch((e) => setError(e.message));
+  };
+
+  useEffect(() => {
+    fetchUsers();
   }, []);
 
   useEffect(() => {
-    if (!users) return;
-
-    let filtered = users;
-
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        (user) =>
-          user.name.toLowerCase().includes(query) ||
-          user.email.toLowerCase().includes(query)
-      );
-    }
-
-    // Date filter
-    if (dateFilter) {
-      filtered = filtered.filter(
-        (user) => {
-          const userDate = new Date(user.createdAt).toISOString().split('T')[0];
-          return userDate === dateFilter;
-        }
-      );
-    }
-
-    setFilteredUsers(filtered);
-  }, [searchQuery, dateFilter, users]);
+    fetchUsers();
+  }, [searchQuery, dateFilter]);
 
   if (error) {
     return (
@@ -123,8 +104,8 @@ export default function AdminUsersTable() {
     );
   }
 
-  const totalUsers = users.length;
-  const activeUsers = users.filter((u) => u.analytics.todayLoggedCount > 0).length;
+  const totalUsers = users?.length || 0;
+  const activeUsers = users?.filter((u) => u.analytics.todayLoggedCount > 0).length || 0;
 
   return (
     <div className="space-y-3 sm:space-y-4">
@@ -144,13 +125,15 @@ export default function AdminUsersTable() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              disabled
-              className="w-full rounded-lg border border-border bg-surface-muted/50 px-3 py-2 text-sm outline-none opacity-50 sm:rounded-xl sm:px-4 sm:py-2.5 sm:w-auto cursor-not-allowed"
-            />
+            <div className="relative">
+              <label className="mb-1 block text-xs font-medium text-foreground/60 sm:sr-only">Join Date</label>
+              <input
+                type="date"
+                value={dateFilter}
+                onChange={(e) => setDateFilter(e.target.value)}
+                className="w-full rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 sm:rounded-xl sm:px-4 sm:py-2.5 sm:w-auto"
+              />
+            </div>
           </div>
           {(searchQuery || dateFilter) && (
             <button
@@ -164,9 +147,9 @@ export default function AdminUsersTable() {
             </button>
           )}
         </div>
-        {filteredUsers && filteredUsers.length !== users.length && (
+        {users && users.length > 0 && (
           <p className="mt-2 text-[11px] text-foreground/50 sm:mt-3 sm:text-xs">
-            Showing {filteredUsers.length} of {users.length} users
+            Showing {users.length} users
           </p>
         )}
       </div>
@@ -200,14 +183,14 @@ export default function AdminUsersTable() {
       </div>
 
       {/* User List */}
-      {!filteredUsers ? (
+      {!users ? (
         <div className="flex items-center justify-center rounded-xl border border-border bg-surface p-8 sm:rounded-2xl sm:p-12">
           <div className="text-center">
             <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
             <p className="text-sm text-foreground/60">Loading...</p>
           </div>
         </div>
-      ) : filteredUsers.length === 0 ? (
+      ) : users.length === 0 ? (
         <div className="rounded-xl border border-border bg-surface p-8 text-center sm:rounded-2xl sm:p-12">
           <div className="mb-4 text-4xl">🔍</div>
           <p className="text-base font-medium text-foreground sm:text-lg">No users found</p>
@@ -217,7 +200,7 @@ export default function AdminUsersTable() {
         <>
           {/* Mobile: stacked cards, no horizontal scroll */}
           <div className="flex flex-col gap-2 sm:hidden">
-            {filteredUsers.map((u) => (
+            {users.map((u) => (
               <div
                 key={u.id}
                 className="overflow-hidden rounded-lg border border-border bg-gradient-to-br from-surface to-surface-muted/30 p-3 shadow-sm transition-all hover:shadow-md hover:border-primary-200"
@@ -288,7 +271,7 @@ export default function AdminUsersTable() {
                 </tr>
               </thead>
               <tbody>
-                {filteredUsers.map((u) => (
+                {users.map((u) => (
                   <tr key={u.id} className="border-b border-border last:border-0 hover:bg-surface-muted/50 transition-colors">
                     <td className="px-4 py-3 font-medium text-foreground">{u.name}</td>
                     <td className="px-4 py-3 text-foreground/70">{u.email}</td>

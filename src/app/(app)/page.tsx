@@ -9,7 +9,6 @@ type Analytics = {
   grid: { date: string; statuses: Record<string, string | null> }[];
   todayLoggedCount: number;
   totalPrayers: number;
-  streak: number;
   infradiPercent: number;
   qazaCount: number;
   totalLogged: number;
@@ -60,11 +59,6 @@ export default function DashboardPage() {
           icon={<PrayerIcon className="h-5 w-5" />}
           label={loading ? "..." : "Aaj ki Namaz"}
           value={data ? `${data.todayLoggedCount}/${data.totalPrayers}` : "—"}
-        />
-        <StatCard
-          icon={<ChartIcon className="h-5 w-5" />}
-          label={loading ? "..." : "Streak"}
-          value={data ? `${data.streak} din` : "—"}
         />
         <StatCard
           icon={<TasbihIcon className="h-5 w-5" />}

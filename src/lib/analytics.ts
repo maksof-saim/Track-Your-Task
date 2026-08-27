@@ -48,17 +48,6 @@ export async function getUserAnalytics(userId: string) {
   const todayStatuses = byDate.get(todayIso) ?? {};
   const todayLoggedCount = Object.values(todayStatuses).filter(Boolean).length;
 
-  let streak = 0;
-  for (let i = 0; i < RANGE_DAYS; i++) {
-    const iso = isoDateDaysAgoUTC(i);
-    const statuses = byDate.get(iso);
-    const allLogged = statuses && PRAYERS.every((p) => Boolean(statuses[p.key]));
-    const noQaza = statuses && PRAYERS.every((p) => statuses[p.key] !== "QAZA");
-    if (i === 0 && !allLogged) continue; // today may still be in progress
-    if (allLogged && noQaza) streak++;
-    else break;
-  }
-
   const zikrLogs = await prisma.zikrLog.findMany({
     where: { userId, date: { gte: since } },
   });
@@ -79,7 +68,6 @@ export async function getUserAnalytics(userId: string) {
     grid,
     todayLoggedCount,
     totalPrayers: PRAYERS.length,
-    streak,
     infradiPercent: totalLogged ? Math.round((infradi / totalLogged) * 100) : 0,
     qazaCount: qaza,
     totalLogged,
