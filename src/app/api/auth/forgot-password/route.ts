@@ -8,7 +8,11 @@ export async function POST(request: Request) {
   const parsed = forgotPasswordSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Sahi email likhein" }, { status: 400 });
 
+  console.log("Forgot password request for email:", parsed.data.email);
+
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
+  console.log("User found:", user ? "YES" : "NO");
+
   let developmentResetUrl: string | undefined;
   if (user) {
     const { token, tokenHash } = createResetToken();
@@ -18,8 +22,13 @@ export async function POST(request: Request) {
     });
     const baseUrl = process.env.APP_URL ?? new URL(request.url).origin;
     developmentResetUrl = `${baseUrl}/reset-password?token=${token}`;
+    console.log("Reset URL:", developmentResetUrl);
+    console.log("RESEND_API_KEY:", process.env.RESEND_API_KEY ? "SET" : "MISSING");
+    console.log("EMAIL_FROM:", process.env.EMAIL_FROM || "MISSING");
+
     try {
-      await sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl: developmentResetUrl });
+      const emailResult = await sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl: developmentResetUrl });
+      console.log("Email send result:", emailResult);
     } catch (error) {
       console.error("Password reset email failed", error);
     }

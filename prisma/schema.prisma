@@ -1,6 +1,3 @@
-// Prisma schema — Track Your Task (prayer & zikr tracker)
-// docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,23 +7,17 @@ datasource db {
   provider = "postgresql"
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
 model User {
-  id           String   @id @default(cuid())
-  name         String
-  email        String   @unique
-  passwordHash String
-  role         Role     @default(USER)
-  createdAt    DateTime @default(now())
-
-  prayerLogs    PrayerLog[]
-  zikrLogs      ZikrLog[]
-  checklistLogs ChecklistLog[]
+  id                  String               @id @default(cuid())
+  name                String
+  email               String               @unique
+  passwordHash        String
+  createdAt           DateTime             @default(now())
+  role                Role                 @default(USER)
+  checklistLogs       ChecklistLog[]
   passwordResetTokens PasswordResetToken[]
+  prayerLogs          PrayerLog[]
+  zikrLogs            ZikrLog[]
 }
 
 model PasswordResetToken {
@@ -35,11 +26,59 @@ model PasswordResetToken {
   userId    String
   expiresAt DateTime
   createdAt DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([expiresAt])
+}
+
+model PrayerLog {
+  id        String       @id @default(cuid())
+  userId    String
+  date      DateTime     @db.Date
+  prayer    PrayerName
+  status    PrayerStatus
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, prayer])
+  @@index([userId, date])
+}
+
+model ZikrLog {
+  id        String   @id @default(cuid())
+  userId    String
+  date      DateTime @db.Date
+  name      String
+  count     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  mode      ZikrMode @default(COUNT)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, name])
+  @@index([userId, date])
+}
+
+model ChecklistLog {
+  id        String           @id @default(cuid())
+  userId    String
+  date      DateTime         @db.Date
+  section   ChecklistSection
+  item      String
+  done      Boolean          @default(false)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date, section, item])
+  @@index([userId, date, section])
+}
+
+enum Role {
+  USER
+  ADMIN
 }
 
 enum PrayerName {
@@ -61,54 +100,7 @@ enum ZikrMode {
   KASRAT
 }
 
-model PrayerLog {
-  id        String       @id @default(cuid())
-  userId    String
-  date      DateTime     @db.Date
-  prayer    PrayerName
-  status    PrayerStatus
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, date, prayer])
-  @@index([userId, date])
-}
-
-model ZikrLog {
-  id        String   @id @default(cuid())
-  userId    String
-  date      DateTime @db.Date
-  name      String
-  count     Int      @default(0)
-  mode      ZikrMode @default(COUNT)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, date, name])
-  @@index([userId, date])
-}
-
 enum ChecklistSection {
   TILAWAT
   HIFAZAT
-}
-
-model ChecklistLog {
-  id        String           @id @default(cuid())
-  userId    String
-  date      DateTime         @db.Date
-  section   ChecklistSection
-  item      String
-  done      Boolean          @default(false)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, date, section, item])
-  @@index([userId, date, section])
 }
