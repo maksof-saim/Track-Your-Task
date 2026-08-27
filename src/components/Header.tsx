@@ -28,10 +28,10 @@ export default function Header({ userName }: { userName: string }) {
             </span>
             <span className="flex min-w-0 flex-col leading-tight">
               <span className="truncate text-sm font-semibold tracking-wide sm:text-base">
-                Track Your Task
+                Track Your Amaal
               </span>
               <span className="truncate text-[10px] text-white/70 sm:text-[11px]">
-                Namaz &amp; Zikr Tracker
+                Amaal Tracker
               </span>
             </span>
           </Link>

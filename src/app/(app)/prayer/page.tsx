@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { PRAYERS, STATUSES, todayISO, formatDisplayDate, type PrayerKey, type StatusKey } from "@/lib/prayerMeta";
 
 type EntryMap = Partial<Record<PrayerKey, StatusKey>>;
@@ -12,11 +14,11 @@ const STATUS_STYLES: Record<StatusKey, string> = {
 };
 
 export default function PrayerPage() {
+  const router = useRouter();
   const [date, setDate] = useState(todayISO());
   const [entries, setEntries] = useState<EntryMap>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [savedMessage, setSavedMessage] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -29,7 +31,6 @@ export default function PrayerPage() {
           map[entry.prayer as PrayerKey] = entry.status as StatusKey;
         }
         setEntries(map);
-        setSavedMessage(null);
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
@@ -41,15 +42,16 @@ export default function PrayerPage() {
 
   function setStatus(prayer: PrayerKey, status: StatusKey) {
     setEntries((prev) => ({ ...prev, [prayer]: status }));
-    setSavedMessage(null);
   }
 
   async function handleSave() {
     const filled = PRAYERS.filter((p) => entries[p.key]);
-    if (filled.length === 0) return;
+    if (filled.length === 0) {
+      toast.error("Please select at least one prayer status");
+      return;
+    }
 
     setSaving(true);
-    setSavedMessage(null);
     const res = await fetch("/api/prayer", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -59,7 +61,17 @@ export default function PrayerPage() {
       }),
     });
     setSaving(false);
-    setSavedMessage(res.ok ? "Record save ho gaya" : "Save nahi ho saka, dobara koshish karein");
+
+    if (res.ok) {
+      toast.success("Prayer record saved successfully!", {
+        description: "Your prayer status has been recorded.",
+      });
+      setTimeout(() => router.push("/"), 1500);
+    } else {
+      toast.error("Failed to save record", {
+        description: "Please try again.",
+      });
+    }
   }
 
   const loggedCount = PRAYERS.filter((p) => entries[p.key]).length;
@@ -68,20 +80,19 @@ export default function PrayerPage() {
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Namaz ka Record</h1>
+          <h1 className="text-xl font-semibold text-foreground">Prayer Record</h1>
           <p className="text-sm text-foreground/60">
-            Har namaz ke saamne uska status chunein aur save karein
+            Select prayer status and save your record
           </p>
         </div>
         <div>
           <label htmlFor="date" className="mb-1 block text-xs font-medium text-foreground/60">
-            Tareekh
+            Date
           </label>
           <input
             id="date"
             type="date"
             value={date}
-            max={todayISO()}
             onChange={(e) => setDate(e.target.value)}
             className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm outline-none focus:border-primary-400"
           />
@@ -90,7 +101,7 @@ export default function PrayerPage() {
 
       <div className="mb-4 flex items-center justify-between rounded-xl border border-border bg-surface-muted px-4 py-2.5 text-sm text-foreground/70">
         <span>{formatDisplayDate(date)}</span>
-        <span className="font-medium text-primary-500">{loggedCount}/{PRAYERS.length} record ho chuki</span>
+        <span className="font-medium text-primary-500">{loggedCount}/{PRAYERS.length} recorded</span>
       </div>
 
       <div className={`flex flex-col gap-3 ${loading ? "opacity-50" : ""}`}>
@@ -109,11 +120,10 @@ export default function PrayerPage() {
                     type="button"
                     onClick={() => setStatus(prayer.key, status.key)}
                     title={status.hint}
-                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-colors sm:text-sm ${
-                      active
-                        ? STATUS_STYLES[status.key]
-                        : "border-border text-foreground/50 hover:border-primary-300 hover:text-foreground"
-                    }`}
+                    className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-colors sm:text-sm ${active
+                      ? STATUS_STYLES[status.key]
+                      : "border-border text-foreground/50 hover:border-primary-300 hover:text-foreground"
+                      }`}
                   >
                     {status.label}
                   </button>
@@ -124,17 +134,14 @@ export default function PrayerPage() {
         ))}
       </div>
 
-      <div className="mt-6 flex items-center gap-4">
+      <div className="mt-6">
         <button
           onClick={handleSave}
           disabled={saving || loading}
-          className="rounded-lg bg-primary-500 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:opacity-60"
+          className="w-full rounded-xl bg-primary-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:opacity-60 sm:w-auto"
         >
-          {saving ? "Save ho raha hai..." : "Record Save Karein"}
+          {saving ? "Saving..." : "Save Prayer Record"}
         </button>
-        {savedMessage && (
-          <span className="text-sm text-primary-500">{savedMessage}</span>
-        )}
       </div>
     </div>
   );

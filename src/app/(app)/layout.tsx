@@ -3,6 +3,7 @@ import { SidebarProvider } from "@/components/SidebarContext";
 import Header from "@/components/Header";
 import Sidebar from "@/components/Sidebar";
 import Footer from "@/components/Footer";
+import { Toaster } from "sonner";
 
 export default async function AppLayout({
   children,
@@ -24,6 +25,7 @@ export default async function AppLayout({
           </main>
         </div>
         <Footer />
+        <Toaster position="top-right" richColors closeButton />
       </div>
     </SidebarProvider>
   );

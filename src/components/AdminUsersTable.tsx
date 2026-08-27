@@ -125,7 +125,6 @@ export default function AdminUsersTable() {
 
   const totalUsers = users.length;
   const activeUsers = users.filter((u) => u.analytics.todayLoggedCount > 0).length;
-  const avgStreak = Math.round(users.reduce((acc, u) => acc + u.analytics.streak, 0) / users.length);
 
   return (
     <div className="space-y-3 sm:space-y-4">
@@ -149,7 +148,8 @@ export default function AdminUsersTable() {
               type="date"
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="w-full rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 sm:rounded-xl sm:px-4 sm:py-2.5 sm:w-auto"
+              disabled
+              className="w-full rounded-lg border border-border bg-surface-muted/50 px-3 py-2 text-sm outline-none opacity-50 sm:rounded-xl sm:px-4 sm:py-2.5 sm:w-auto cursor-not-allowed"
             />
           </div>
           {(searchQuery || dateFilter) && (
@@ -172,7 +172,7 @@ export default function AdminUsersTable() {
       </div>
 
       {/* Stats Cards - Compact */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+      <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-2">
         <div className="relative overflow-hidden rounded-lg border border-border bg-gradient-to-br from-primary-500/5 via-primary-500/10 to-primary-600/5 p-3 shadow-sm sm:rounded-xl sm:p-4">
           <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-primary-500/10" />
           <div className="relative">
@@ -195,18 +195,6 @@ export default function AdminUsersTable() {
             </div>
             <p className="text-[10px] font-medium text-foreground/60 sm:text-[11px]">Active Today</p>
             <p className="text-lg font-bold text-foreground sm:text-xl">{activeUsers}</p>
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-lg border border-border bg-gradient-to-br from-gold-500/5 via-gold-500/10 to-gold-600/5 p-3 shadow-sm sm:rounded-xl sm:p-4">
-          <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-gold-500/10" />
-          <div className="relative">
-            <div className="mb-1 flex h-8 w-8 items-center justify-center rounded-lg bg-gold-500/10 text-gold-600 sm:h-10 sm:w-10">
-              <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
-              </svg>
-            </div>
-            <p className="text-[10px] font-medium text-foreground/60 sm:text-[11px]">Avg Streak</p>
-            <p className="text-lg font-bold text-foreground sm:text-xl">{avgStreak} days</p>
           </div>
         </div>
       </div>
@@ -257,22 +245,6 @@ export default function AdminUsersTable() {
                   </div>
                   <div>
                     <p className="text-[9px] uppercase tracking-wide text-foreground/45">
-                      Streak
-                    </p>
-                    <p className="text-xs font-medium text-foreground">
-                      {u.analytics.streak} days
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] uppercase tracking-wide text-foreground/45">
-                      Jamaat %
-                    </p>
-                    <p className="text-xs font-medium text-foreground">
-                      {u.analytics.jamaatPercent}%
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] uppercase tracking-wide text-foreground/45">
                       Today's Zikr
                     </p>
                     <p className="text-xs font-medium text-foreground">
@@ -310,8 +282,6 @@ export default function AdminUsersTable() {
                   <th className="px-4 py-3 font-medium">Role</th>
                   <th className="px-4 py-3 font-medium">Join Date</th>
                   <th className="px-4 py-3 font-medium">Today's Prayer</th>
-                  <th className="px-4 py-3 font-medium">Streak</th>
-                  <th className="px-4 py-3 font-medium">Jamaat %</th>
                   <th className="px-4 py-3 font-medium">Today's Zikr</th>
                   <th className="px-4 py-3 font-medium">Tilawat</th>
                   <th className="px-4 py-3 font-medium">Hifazat</th>
@@ -331,8 +301,6 @@ export default function AdminUsersTable() {
                     <td className="px-4 py-3 text-foreground">
                       {u.analytics.todayLoggedCount}/{u.analytics.totalPrayers}
                     </td>
-                    <td className="px-4 py-3 text-foreground">{u.analytics.streak} days</td>
-                    <td className="px-4 py-3 text-foreground">{u.analytics.jamaatPercent}%</td>
                     <td className="px-4 py-3 text-foreground">{u.analytics.zikrToday}</td>
                     <td className="px-4 py-3 text-foreground">
                       {u.analytics.tilawatToday}/{u.analytics.tilawatTarget}

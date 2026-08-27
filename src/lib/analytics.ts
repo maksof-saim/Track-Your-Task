@@ -80,7 +80,6 @@ export async function getUserAnalytics(userId: string) {
     todayLoggedCount,
     totalPrayers: PRAYERS.length,
     streak,
-    jamaatPercent: totalLogged ? Math.round((jamaat / totalLogged) * 100) : 0,
     infradiPercent: totalLogged ? Math.round((infradi / totalLogged) * 100) : 0,
     qazaCount: qaza,
     totalLogged,

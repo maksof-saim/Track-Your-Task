@@ -10,7 +10,6 @@ type Analytics = {
   todayLoggedCount: number;
   totalPrayers: number;
   streak: number;
-  jamaatPercent: number;
   infradiPercent: number;
   qazaCount: number;
   totalLogged: number;
@@ -30,13 +29,25 @@ const CELL_STYLES: Record<string, string> = {
 
 export default function DashboardPage() {
   const [data, setData] = useState<Analytics | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const result = useEffect(() => {
+  useEffect(() => {
+    let cancelled = false;
     fetch("/api/analytics")
       .then((res) => res.json())
-      .then(setData);
+      .then((result) => {
+        if (!cancelled) {
+          setData(result);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
-  console.log(result, "result")
   return (
     <div className="mx-auto max-w-4xl">
       <div className="mb-6">
@@ -44,42 +55,36 @@ export default function DashboardPage() {
         <p className="text-sm text-foreground/60">Aapki ibadat ka khulasa</p>
       </div>
 
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3">
+      <div className={`mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 ${loading ? "opacity-50" : ""}`}>
         <StatCard
           icon={<PrayerIcon className="h-5 w-5" />}
-          label="Aaj ki Namaz"
+          label={loading ? "..." : "Aaj ki Namaz"}
           value={data ? `${data.todayLoggedCount}/${data.totalPrayers}` : "—"}
         />
         <StatCard
           icon={<ChartIcon className="h-5 w-5" />}
-          label="Streak"
+          label={loading ? "..." : "Streak"}
           value={data ? `${data.streak} din` : "—"}
         />
         <StatCard
-          icon={<ChartIcon className="h-5 w-5" />}
-          label="Jamaat %"
-          value={data ? `${data.jamaatPercent}%` : "—"}
-          accent="gold"
-        />
-        <StatCard
           icon={<TasbihIcon className="h-5 w-5" />}
-          label="Aaj ka Zikr"
+          label={loading ? "..." : "Aaj ka Zikr"}
           value={data ? `${data.zikrToday}` : "—"}
         />
         <StatCard
           icon={<BookIcon className="h-5 w-5" />}
-          label="Aaj ki Tilawat"
+          label={loading ? "..." : "Aaj ki Tilawat"}
           value={data ? `${data.tilawatToday}/${data.tilawatTarget}` : "—"}
         />
         <StatCard
           icon={<ShieldIcon className="h-5 w-5" />}
-          label="Aaj ki Hifazat"
+          label={loading ? "..." : "Aaj ki Hifazat"}
           value={data ? `${data.hifazatToday}/${data.hifazatTarget}` : "—"}
           accent="gold"
         />
       </div>
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-2">
+      <div className={`mb-6 grid gap-3 sm:grid-cols-2 ${loading ? "opacity-50" : ""}`}>
         <QuickLink
           href="/prayer"
           title="Aaj ki namaz record karein"
@@ -112,7 +117,11 @@ export default function DashboardPage() {
           <Legend />
         </div>
 
-        {data ? (
+        {loading ? (
+          <div className="flex items-center justify-center py-8">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
+          </div>
+        ) : data ? (
           <div className="overflow-x-auto">
             <div className="min-w-[560px]">
               <div className="mb-1 grid grid-cols-[70px_repeat(14,1fr)] gap-1">
@@ -146,9 +155,7 @@ export default function DashboardPage() {
               ))}
             </div>
           </div>
-        ) : (
-          <p className="text-sm text-foreground/50">Load ho raha hai...</p>
-        )}
+        ) : null}
       </div>
     </div>
   );
@@ -169,8 +176,8 @@ function StatCard({
     <div className="rounded-xl border border-border bg-surface p-4">
       <span
         className={`mb-3 inline-flex rounded-full p-2 ${accent === "gold"
-            ? "bg-gold-100 text-gold-600"
-            : "bg-primary-50 text-primary-500"
+          ? "bg-gold-100 text-gold-600"
+          : "bg-primary-50 text-primary-500"
           }`}
       >
         {icon}

@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import { todayISO, formatDisplayDate } from "@/lib/prayerMeta";
 import { AZKAAR_TARGET_ITEMS } from "@/lib/checklistMeta";
 
@@ -14,14 +16,15 @@ const initialDraft = (entry?: ZikrEntry): Draft => ({
 });
 
 export default function ZikrPage() {
-  const [date] = useState(todayISO());
+  const router = useRouter();
+  const [date, setDate] = useState(todayISO());
   const [entries, setEntries] = useState<ZikrEntry[]>([]);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<string | null>(null);
-  const [saved, setSaved] = useState<string | null>(null);
 
   useEffect(() => {
+    setLoading(true);
     fetch(`/api/zikr?date=${date}`)
       .then((res) => res.json())
       .then((data) => {
@@ -39,23 +42,19 @@ export default function ZikrPage() {
       .finally(() => setLoading(false));
   }, [date]);
 
-  const totalToday = useMemo(
-    () => entries.reduce((sum, entry) => sum + (entry.mode === "COUNT" ? entry.count : 0), 0),
-    [entries],
-  );
-
   function updateDraft(name: string, changes: Partial<Draft>) {
-    setSaved(null);
     setDrafts((current) => ({ ...current, [name]: { ...current[name], ...changes } }));
   }
 
   async function saveEntry(name: string) {
     const draft = drafts[name] ?? initialDraft();
     const count = Number(draft.count);
-    if (draft.mode === "COUNT" && (!Number.isInteger(count) || count < 0)) return;
+    if (draft.mode === "COUNT" && (!Number.isInteger(count) || count < 0)) {
+      toast.error("Please enter a valid count");
+      return;
+    }
 
     setPending(name);
-    setSaved(null);
     const response = await fetch("/api/zikr", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -73,30 +72,37 @@ export default function ZikrPage() {
         ...current.filter((entry) => entry.name !== name),
         nextEntry,
       ]);
-      setSaved(name);
-      window.setTimeout(() => setSaved((current) => (current === name ? null : current)), 2200);
+      toast.success("Zikr saved successfully!", {
+        description: `${name} has been recorded.`,
+      });
+    } else {
+      toast.error("Failed to save zikr", {
+        description: "Please try again.",
+      });
     }
     setPending(null);
   }
 
   return (
     <div className="mx-auto w-full max-w-3xl">
-      <div className="mb-5 sm:mb-7">
-        <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary-500">
-          Daily ibadah
-        </p>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Azkaar</h1>
-        <p className="mt-1 text-sm text-foreground/60">{formatDisplayDate(date)} ka zikr record karein</p>
-      </div>
-
-      <div className="mb-5 flex items-center justify-between rounded-2xl border border-primary-100 bg-primary-50 px-4 py-3.5 sm:mb-7 sm:px-5">
+      <div className="mb-5 flex flex-col gap-3 sm:mb-7">
         <div>
-          <p className="text-xs font-medium text-primary-700/70">Aaj ka manual count</p>
-          <p className="mt-0.5 text-2xl font-semibold text-primary-600">{totalToday}</p>
+          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary-500">
+            Daily ibadah
+          </p>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Azkaar</h1>
+          <p className="mt-1 text-sm text-foreground/60">Record your daily zikr</p>
         </div>
-        <span className="rounded-full bg-white/70 px-3 py-1 text-xs font-medium text-primary-600">
-          {entries.length} saved
-        </span>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 sm:rounded-xl sm:px-4 sm:py-2.5"
+          />
+          <span className="text-xs text-foreground/60">{formatDisplayDate(date)}</span>
+        </div>
       </div>
 
       <div className={`space-y-4 ${loading ? "opacity-60" : ""}`}>
@@ -106,7 +112,6 @@ export default function ZikrPage() {
           const count = Number(draft.count);
           const hasValidCount = draft.mode === "KASRAT" || (Number.isInteger(count) && count >= 0);
           const isPending = pending === name;
-          const isSaved = saved === name;
 
           return (
             <section key={name} className="rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-5">
@@ -114,10 +119,9 @@ export default function ZikrPage() {
                 <div className="min-w-0">
                   <h2 className="font-semibold leading-6 text-foreground">{name}</h2>
                   <p className="mt-1 text-xs text-foreground/55">
-                    {entry?.mode === "KASRAT" ? "Kasrat se saved" : `Aaj ka count: ${entry?.count ?? 0}`}
+                    {entry?.mode === "KASRAT" ? "Kasrat se saved" : `Today's count: ${entry?.count ?? 0}`}
                   </p>
                 </div>
-                {isSaved && <span className="shrink-0 text-xs font-semibold text-primary-500">Saved ✓</span>}
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -131,7 +135,7 @@ export default function ZikrPage() {
                   />
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-foreground">Apna count</span>
-                    <span className="block text-xs text-foreground/55">Kitni martaba parha?</span>
+                    <span className="block text-xs text-foreground/55">How many times?</span>
                   </span>
                   <input
                     type="number"
@@ -155,7 +159,7 @@ export default function ZikrPage() {
                   />
                   <span>
                     <span className="block text-sm font-semibold text-foreground">Kasrat se</span>
-                    <span className="block text-xs text-foreground/55">300 se zyada parha</span>
+                    <span className="block text-xs text-foreground/55">More than 300</span>
                   </span>
                 </label>
               </div>
@@ -166,7 +170,7 @@ export default function ZikrPage() {
                 disabled={isPending || !hasValidCount}
                 className="mt-4 flex w-full items-center justify-center rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isPending ? "Saving..." : "Save zikr"}
+                {isPending ? "Saving..." : "Save Zikr"}
               </button>
             </section>
           );
