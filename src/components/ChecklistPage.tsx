@@ -55,6 +55,15 @@ export default function ChecklistPage({
   }
 
   async function handleSave() {
+    // Client-side validation
+    const checkedCount = items.filter((i) => done[i.key]).length;
+    if (checkedCount === 0) {
+      toast.error("Please select at least one item", {
+        description: `Mark at least one ${section.toLowerCase()} item as done.`,
+      });
+      return;
+    }
+
     setSaving(true);
     const res = await fetch("/api/checklist", {
       method: "POST",
@@ -73,8 +82,9 @@ export default function ChecklistPage({
       });
       setTimeout(() => router.push("/"), 1500);
     } else {
+      const data = await res.json().catch(() => ({}));
       toast.error("Failed to save record", {
-        description: "Please try again.",
+        description: data.error || "Please try again.",
       });
     }
   }
@@ -142,9 +152,16 @@ export default function ChecklistPage({
         <button
           onClick={handleSave}
           disabled={saving || loading}
-          className="w-full rounded-xl bg-primary-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:opacity-60 sm:w-auto"
+          className="flex items-center justify-center w-full rounded-xl bg-primary-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:opacity-60 sm:w-auto"
         >
-          {saving ? "Saving..." : `Save ${title}`}
+          {saving ? (
+            <>
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              Saving...
+            </>
+          ) : (
+            `Save ${title}`
+          )}
         </button>
       </div>
     </div>

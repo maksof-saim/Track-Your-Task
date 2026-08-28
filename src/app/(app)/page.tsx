@@ -51,7 +51,7 @@ export default function DashboardPage() {
     <div className="mx-auto max-w-4xl">
       <div className="mb-6">
         <h1 className="text-xl font-semibold text-foreground">Analytics</h1>
-        <p className="text-sm text-foreground/60">Aapki ibadat ka khulasa</p>
+        <p className="text-sm text-foreground/60">Your worship summary</p>
       </div>
 
       <div className={`mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 ${loading ? "opacity-50" : ""}`}>
@@ -81,33 +81,33 @@ export default function DashboardPage() {
       <div className={`mb-6 grid gap-3 sm:grid-cols-2 ${loading ? "opacity-50" : ""}`}>
         <QuickLink
           href="/prayer"
-          title="Aaj ki namaz record karein"
-          subtitle="Pancho waqt ki namaz update karein"
+          title="Record today's prayers"
+          subtitle="Update your five daily prayers"
           icon={<PrayerIcon className="h-5 w-5" />}
         />
         <QuickLink
           href="/zikr"
-          title="Azkaar kholein"
-          subtitle="Aaj ka zikr add karein"
+          title="Open Azkaar"
+          subtitle="Add today's zikr"
           icon={<TasbihIcon className="h-5 w-5" />}
         />
         <QuickLink
           href="/tilawat"
-          title="Tilawat record karein"
-          subtitle="Quran aur muqarrar suraton ka jaiza"
+          title="Record Tilawat"
+          subtitle="Track Quran recitation and memorized surahs"
           icon={<BookIcon className="h-5 w-5" />}
         />
         <QuickLink
           href="/hifazat"
-          title="Hifazat ka jaiza"
-          subtitle="Nazar, kaan, zaban ki hifazat"
+          title="Hifazat Review"
+          subtitle="Track protection of eyes, ears, and tongue"
           icon={<ShieldIcon className="h-5 w-5" />}
         />
       </div>
 
       <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-          <p className="font-medium text-foreground">Pichle 14 din</p>
+          <p className="font-medium text-foreground">Last 14 days</p>
           <Legend />
         </div>
 

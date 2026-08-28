@@ -88,7 +88,7 @@ export default function AdminUsersTable() {
       <div className="flex items-center justify-center rounded-2xl border border-border bg-surface p-12">
         <div className="text-center">
           <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
-          <p className="text-sm text-foreground/60">Data load ho raha hai...</p>
+          <p className="text-sm text-foreground/60">Loading...</p>
         </div>
       </div>
     );
@@ -98,8 +98,8 @@ export default function AdminUsersTable() {
     return (
       <div className="rounded-2xl border border-border bg-surface p-12 text-center">
         <div className="mb-4 text-4xl">👥</div>
-        <p className="text-lg font-medium text-foreground">Abhi tak koi user register nahi hua.</p>
-        <p className="mt-2 text-sm text-foreground/50">Jab koi user register karega, yahan data dikhega.</p>
+        <p className="text-lg font-medium text-foreground">No users registered yet.</p>
+        <p className="mt-2 text-sm text-foreground/50">When users register, their data will appear here.</p>
       </div>
     );
   }

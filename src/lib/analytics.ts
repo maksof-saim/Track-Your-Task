@@ -14,7 +14,7 @@ export async function getUserAnalytics(userId: string) {
   const since = new Date(`${isoDateDaysAgoUTC(RANGE_DAYS - 1)}T00:00:00.000Z`);
 
   const logs = await prisma.prayerLog.findMany({
-    where: { userId, date: { gte: since } },
+    where: { userId, date: { gte: since }, customPrayerId: null },
     orderBy: { date: "asc" },
   });
 
@@ -22,7 +22,9 @@ export async function getUserAnalytics(userId: string) {
   for (const log of logs) {
     const iso = log.date.toISOString().slice(0, 10);
     if (!byDate.has(iso)) byDate.set(iso, {});
-    byDate.get(iso)![log.prayer] = log.status;
+    if (log.prayer) {
+      byDate.get(iso)![log.prayer] = log.status;
+    }
   }
 
   const grid = Array.from({ length: GRID_DAYS }, (_, i) => {
@@ -40,7 +42,7 @@ export async function getUserAnalytics(userId: string) {
   for (const log of logs) {
     if (log.status === "JAMAAT") jamaat++;
     else if (log.status === "INFRADI") infradi++;
-    else qaza++;
+    else if (log.status === "QAZA") qaza++;
   }
   const totalLogged = jamaat + infradi + qaza;
 
@@ -49,7 +51,7 @@ export async function getUserAnalytics(userId: string) {
   const todayLoggedCount = Object.values(todayStatuses).filter(Boolean).length;
 
   const zikrLogs = await prisma.zikrLog.findMany({
-    where: { userId, date: { gte: since } },
+    where: { userId, date: { gte: since }, customZikrId: null },
   });
   const zikrToday = zikrLogs
     .filter((z) => z.date.toISOString().slice(0, 10) === todayIso)
@@ -57,7 +59,7 @@ export async function getUserAnalytics(userId: string) {
   const zikrTotal30d = zikrLogs.reduce((sum, z) => sum + z.count, 0);
 
   const checklistLogs = await prisma.checklistLog.findMany({
-    where: { userId, date: { gte: since } },
+    where: { userId, date: { gte: since }, customTilawatId: null, customHifazatId: null },
   });
   const todayChecklist = checklistLogs.filter((c) => c.date.toISOString().slice(0, 10) === todayIso);
   const tilawatTarget = isFriday(todayIso) ? TILAWAT_ITEMS.length : TILAWAT_ITEMS.length - 1;

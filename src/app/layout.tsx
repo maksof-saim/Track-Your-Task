@@ -14,9 +14,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Track Your Task — Namaz & Zikr Tracker",
+  title: "Track Your Amaal — Amaal Tracker",
   description:
-    "Apni pancho waqt ki namazon aur zikr ko roz record karein, apni ibadat ka trend dekhein.",
+    "Track your daily prayers and zikr, monitor your worship trends.",
 };
 
 export default function RootLayout({

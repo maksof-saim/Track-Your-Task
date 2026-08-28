@@ -18,6 +18,10 @@ model User {
   passwordResetTokens PasswordResetToken[]
   prayerLogs          PrayerLog[]
   zikrLogs            ZikrLog[]
+  customPrayers       CustomPrayer[]
+  customZikrs         CustomZikr[]
+  customTilawats      CustomTilawat[]
+  customHifazats      CustomHifazat[]
 }
 
 model PasswordResetToken {
@@ -33,46 +37,58 @@ model PasswordResetToken {
 }
 
 model PrayerLog {
-  id        String       @id @default(cuid())
-  userId    String
-  date      DateTime     @db.Date
-  prayer    PrayerName
-  status    PrayerStatus
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
-  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id             String        @id @default(cuid())
+  userId         String
+  date           DateTime      @db.Date
+  prayer         PrayerName?
+  customPrayerId String?
+  status         PrayerStatus
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  user           User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customPrayer   CustomPrayer? @relation(fields: [customPrayerId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date, prayer])
+  @@unique([userId, date, customPrayerId])
   @@index([userId, date])
 }
 
 model ZikrLog {
-  id        String   @id @default(cuid())
-  userId    String
-  date      DateTime @db.Date
-  name      String
-  count     Int      @default(0)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  mode      ZikrMode @default(COUNT)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id           String      @id @default(cuid())
+  userId       String
+  date         DateTime    @db.Date
+  name         String
+  customZikrId String?
+  count        Int         @default(0)
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  mode         ZikrMode    @default(COUNT)
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customZikr   CustomZikr? @relation(fields: [customZikrId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date, name])
+  @@unique([userId, date, customZikrId])
   @@index([userId, date])
 }
 
 model ChecklistLog {
-  id        String           @id @default(cuid())
-  userId    String
-  date      DateTime         @db.Date
-  section   ChecklistSection
-  item      String
-  done      Boolean          @default(false)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
-  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String           @id @default(cuid())
+  userId          String
+  date            DateTime         @db.Date
+  section         ChecklistSection
+  item            String
+  customTilawatId String?
+  customHifazatId String?
+  done            Boolean          @default(false)
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  user            User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  customTilawat   CustomTilawat?   @relation(fields: [customTilawatId], references: [id], onDelete: Cascade)
+  customHifazat   CustomHifazat?   @relation(fields: [customHifazatId], references: [id], onDelete: Cascade)
 
   @@unique([userId, date, section, item])
+  @@unique([userId, date, section, customTilawatId])
+  @@unique([userId, date, section, customHifazatId])
   @@index([userId, date, section])
 }
 
@@ -103,4 +119,54 @@ enum ZikrMode {
 enum ChecklistSection {
   TILAWAT
   HIFAZAT
+}
+
+model CustomPrayer {
+  id         String      @id @default(cuid())
+  userId     String
+  name       String
+  createdAt  DateTime    @default(now())
+  updatedAt  DateTime    @updatedAt
+  user       User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prayerLogs PrayerLog[]
+
+  @@index([userId])
+}
+
+model CustomZikr {
+  id        String    @id @default(cuid())
+  userId    String
+  name      String
+  hasCount  Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  zikrLogs  ZikrLog[]
+
+  @@index([userId])
+}
+
+model CustomTilawat {
+  id            String         @id @default(cuid())
+  userId        String
+  name          String
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checklistLogs ChecklistLog[]
+
+  @@index([userId])
+}
+
+model CustomHifazat {
+  id            String         @id @default(cuid())
+  userId        String
+  name          String
+  hint          String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checklistLogs ChecklistLog[]
+
+  @@index([userId])
 }

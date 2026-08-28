@@ -16,6 +16,33 @@ export default function RegisterPage() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+
+    // Client-side validation
+    if (!name.trim()) {
+      setError("Please enter your name");
+      return;
+    }
+    if (name.trim().length < 2) {
+      setError("Name must be at least 2 characters");
+      return;
+    }
+    if (!email.trim()) {
+      setError("Please enter your email");
+      return;
+    }
+    if (!email.includes("@")) {
+      setError("Please enter a valid email address");
+      return;
+    }
+    if (!password) {
+      setError("Please enter a password");
+      return;
+    }
+    if (password.length < 6) {
+      setError("Password must be at least 6 characters");
+      return;
+    }
+
     setLoading(true);
 
     const res = await fetch("/api/register", {
@@ -26,7 +53,7 @@ export default function RegisterPage() {
 
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Kuch ghalat ho gaya");
+      setError(data.error ?? "Something went wrong");
       setLoading(false);
       return;
     }
@@ -40,7 +67,7 @@ export default function RegisterPage() {
     setLoading(false);
 
     if (result?.error) {
-      setError("Account ban gaya, login karein");
+      setError("Account created successfully, please sign in");
       router.push("/login");
       return;
     }
@@ -51,15 +78,15 @@ export default function RegisterPage() {
 
   return (
     <div>
-      <h2 className="mb-1 text-lg font-semibold text-foreground">Naya account banayein</h2>
+      <h2 className="mb-1 text-lg font-semibold text-foreground">Create Account</h2>
       <p className="mb-6 text-sm text-foreground/60">
-        Apni namaz aur zikr ka record shuru karne ke liye register karein
+        Register to start tracking your prayers and zikr
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div>
           <label htmlFor="name" className="mb-1 block text-sm font-medium text-foreground/80">
-            Naam
+            Name
           </label>
           <input
             id="name"
@@ -68,7 +95,7 @@ export default function RegisterPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
-            placeholder="Aapka naam"
+            placeholder="Your name"
           />
         </div>
         <div>
@@ -82,7 +109,7 @@ export default function RegisterPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
-            placeholder="aap@example.com"
+            placeholder="you@example.com"
           />
         </div>
         <div>
@@ -97,7 +124,7 @@ export default function RegisterPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
-            placeholder="Kam se kam 6 harf"
+            placeholder="Minimum 6 characters"
           />
         </div>
 
@@ -106,16 +133,23 @@ export default function RegisterPage() {
         <button
           type="submit"
           disabled={loading}
-          className="mt-1 rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:opacity-60"
+          className="mt-1 flex items-center justify-center rounded-lg bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:opacity-60"
         >
-          {loading ? "Account ban raha hai..." : "Register"}
+          {loading ? (
+            <>
+              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              Creating account...
+            </>
+          ) : (
+            "Register"
+          )}
         </button>
       </form>
 
       <p className="mt-6 text-center text-sm text-foreground/60">
-        Pehle se account hai?{" "}
+        Already have an account?{" "}
         <Link href="/login" className="font-medium text-primary-500 hover:underline">
-          Login karein
+          Sign in
         </Link>
       </p>
     </div>

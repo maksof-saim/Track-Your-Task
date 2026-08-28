@@ -49,9 +49,26 @@ export default function ZikrPage() {
   async function saveEntry(name: string) {
     const draft = drafts[name] ?? initialDraft();
     const count = Number(draft.count);
-    if (draft.mode === "COUNT" && (!Number.isInteger(count) || count < 0)) {
-      toast.error("Please enter a valid count");
-      return;
+
+    if (draft.mode === "COUNT") {
+      if (draft.count === "" || draft.count.trim() === "") {
+        toast.error("Please enter a count", {
+          description: "Enter the number of times you performed this zikr.",
+        });
+        return;
+      }
+      if (!Number.isInteger(count) || count < 0) {
+        toast.error("Invalid count", {
+          description: "Please enter a valid positive number.",
+        });
+        return;
+      }
+      if (count > 1000000) {
+        toast.error("Count too large", {
+          description: "Count must be less than 1,000,000.",
+        });
+        return;
+      }
     }
 
     setPending(name);
@@ -76,8 +93,9 @@ export default function ZikrPage() {
         description: `${name} has been recorded.`,
       });
     } else {
+      const data = await response.json().catch(() => ({}));
       toast.error("Failed to save zikr", {
-        description: "Please try again.",
+        description: data.error || "Please try again.",
       });
     }
     setPending(null);
@@ -170,7 +188,14 @@ export default function ZikrPage() {
                 disabled={isPending || !hasValidCount}
                 className="mt-4 flex w-full items-center justify-center rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {isPending ? "Saving..." : "Save Zikr"}
+                {isPending ? (
+                  <>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                    Saving...
+                  </>
+                ) : (
+                  "Save Zikr"
+                )}
               </button>
             </section>
           );
