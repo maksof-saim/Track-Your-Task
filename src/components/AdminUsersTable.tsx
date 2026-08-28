@@ -125,7 +125,7 @@ export default function AdminUsersTable() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            <div className="relative">
+            {/* <div className="relative">
               <label className="mb-1 block text-xs font-medium text-foreground/60 sm:sr-only">Join Date</label>
               <input
                 type="date"
@@ -133,7 +133,7 @@ export default function AdminUsersTable() {
                 onChange={(e) => setDateFilter(e.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 sm:rounded-xl sm:px-4 sm:py-2.5 sm:w-auto"
               />
-            </div>
+            </div> */}
           </div>
           {(searchQuery || dateFilter) && (
             <button
