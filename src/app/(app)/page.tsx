@@ -59,18 +59,23 @@ export default function DashboardPage() {
           icon={<PrayerIcon className="h-5 w-5" />}
           label={loading ? "..." : "Aaj ki Namaz"}
           value={data ? `${data.todayLoggedCount}/${data.totalPrayers}` : "—"}
+          href="/prayer"
+
         />
         <StatCard
+          href="/zikr"
           icon={<TasbihIcon className="h-5 w-5" />}
           label={loading ? "..." : "Aaj ka Zikr"}
           value={data ? `${data.zikrToday}` : "—"}
         />
         <StatCard
+          href="/tilawat"
           icon={<BookIcon className="h-5 w-5" />}
           label={loading ? "..." : "Aaj ki Tilawat"}
           value={data ? `${data.tilawatToday}/${data.tilawatTarget}` : "—"}
         />
         <StatCard
+          href="/hifazat"
           icon={<ShieldIcon className="h-5 w-5" />}
           label={loading ? "..." : "Aaj ki Hifazat"}
           value={data ? `${data.hifazatToday}/${data.hifazatTarget}` : "—"}
@@ -105,7 +110,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+      {/* <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <p className="font-medium text-foreground">Last 14 days</p>
           <Legend />
@@ -150,7 +155,7 @@ export default function DashboardPage() {
             </div>
           </div>
         ) : null}
-      </div>
+      </div> */}
     </div>
   );
 }
@@ -159,15 +164,17 @@ function StatCard({
   icon,
   label,
   value,
+  href,
   accent = "primary",
 }: {
   icon: React.ReactNode;
   label: string;
   value: string;
+  href?: string;
   accent?: "primary" | "gold";
 }) {
-  return (
-    <div className="rounded-xl border border-border bg-surface p-4">
+  const content = (
+    <>
       <span
         className={`mb-3 inline-flex rounded-full p-2 ${accent === "gold"
           ? "bg-gold-100 text-gold-600"
@@ -176,11 +183,30 @@ function StatCard({
       >
         {icon}
       </span>
+
       <p className="text-lg font-semibold text-foreground">{value}</p>
       <p className="text-xs text-foreground/50">{label}</p>
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link
+        href={href}
+        className="block rounded-xl border border-border bg-surface p-4 transition-colors hover:border-primary-300 hover:bg-primary-50/30"
+      >
+        {content}
+      </Link>
+    );
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-surface p-4">
+      {content}
     </div>
   );
 }
+
 
 function QuickLink({
   href,

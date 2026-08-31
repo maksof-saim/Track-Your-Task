@@ -245,13 +245,13 @@ export default function PrayerPage() {
       )}
 
       {/* Add Custom Prayer */}
-      <div className="mt-6">
+      {/* <div className="mt-6">
         <AddCustomItem
           type="prayer"
           onAdd={addCustomPrayer}
           placeholder="e.g., Tahajud, Sunnah, etc."
         />
-      </div>
+      </div> */}
 
       <div className="mt-6">
         <button
