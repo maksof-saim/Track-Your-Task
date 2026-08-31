@@ -5,13 +5,19 @@ import { TILAWAT_ITEMS, HIFAZAT_ITEMS, isFriday } from "@/lib/checklistMeta";
 export function isoDateDaysAgoUTC(days: number): string {
   const now = new Date();
   now.setUTCDate(now.getUTCDate() - days);
-  return now.toISOString().slice(0, 10);
+  const year = now.getUTCFullYear();
+  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(now.getUTCDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
-export async function getUserAnalytics(userId: string) {
+export async function getUserAnalytics(userId: string, targetDate?: string) {
   const RANGE_DAYS = 30;
   const GRID_DAYS = 14;
   const since = new Date(`${isoDateDaysAgoUTC(RANGE_DAYS - 1)}T00:00:00.000Z`);
+
+  // Use targetDate if provided, otherwise use today
+  const todayIso = targetDate || isoDateDaysAgoUTC(0);
 
   const logs = await prisma.prayerLog.findMany({
     where: { userId, date: { gte: since }, customPrayerId: null },
@@ -46,7 +52,6 @@ export async function getUserAnalytics(userId: string) {
   }
   const totalLogged = jamaat + infradi + qaza;
 
-  const todayIso = isoDateDaysAgoUTC(0);
   const todayStatuses = byDate.get(todayIso) ?? {};
   const todayLoggedCount = Object.values(todayStatuses).filter(Boolean).length;
 

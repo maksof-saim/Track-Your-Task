@@ -117,7 +117,7 @@ export default function DashboardPage() {
           </div>
         ) : data ? (
           <div className="overflow-x-auto">
-            <div className="min-w-[560px]">
+            <div className="min-w-140">
               <div className="mb-1 grid grid-cols-[70px_repeat(14,1fr)] gap-1">
                 <span />
                 {data.grid.map((day) => (

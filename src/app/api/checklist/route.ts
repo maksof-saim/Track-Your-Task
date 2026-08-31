@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checklistLogSchema, CHECKLIST_SECTIONS } from "@/lib/validation";
+import { todayISO } from "@/lib/prayerMeta";
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -48,6 +49,15 @@ export async function POST(request: Request) {
   }
 
   const { date, section, items } = parsed.data;
+
+  // Validate date is not in the future
+  if (date > todayISO()) {
+    return NextResponse.json(
+      { error: "Cannot save records for future dates" },
+      { status: 400 },
+    );
+  }
+
   const dateValue = new Date(`${date}T00:00:00.000Z`);
 
   await prisma.$transaction(

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { todayISO } from "@/lib/prayerMeta";
 
 type AdminUser = {
   id: string;
@@ -32,8 +34,8 @@ function RoleBadge({ role }: { role: AdminUser["role"] }) {
   return (
     <span
       className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold ${role === "ADMIN"
-        ? "bg-gradient-to-r from-gold-100 to-gold-200 text-gold-700 border border-gold-300"
-        : "bg-gradient-to-r from-primary-50 to-primary-100 text-primary-700 border border-primary-200"
+        ? "bg-linear-to-r from-gold-100 to-gold-200 text-gold-700 border border-gold-300"
+        : "bg-linear-to-r from-primary-50 to-primary-100 text-primary-700 border border-primary-200"
         }`}
     >
       {role}
@@ -42,13 +44,20 @@ function RoleBadge({ role }: { role: AdminUser["role"] }) {
 }
 
 export default function AdminUsersTable() {
+  const router = useRouter();
   const [users, setUsers] = useState<AdminUser[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
+  const [dateFilter, setDateFilter] = useState(todayISO());
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleViewDetail = (userId: string) => {
+    router.push(`/admin/detail?userId=${userId}&date=${dateFilter}`);
+  };
 
   const fetchUsers = () => {
+    setLoading(true);
     const params = new URLSearchParams();
     if (searchQuery) params.append("search", searchQuery);
     if (dateFilter) params.append("date", dateFilter);
@@ -57,14 +66,19 @@ export default function AdminUsersTable() {
       .then(async (res) => {
         if (!res.ok) {
           const data = await res.json().catch(() => ({}));
-          throw new Error(data.error ?? "Load nahi ho saka");
+          throw new Error(data.error || "Failed to load users");
         }
         return res.json();
       })
       .then((data) => {
         setUsers(data.users);
+        setError(null);
       })
-      .catch((e) => setError(e.message));
+      .catch((e) => {
+        setError(e.message);
+        setUsers([]);
+      })
+      .finally(() => setLoading(false));
   };
 
   useEffect(() => {
@@ -97,9 +111,11 @@ export default function AdminUsersTable() {
   if (users.length === 0) {
     return (
       <div className="rounded-2xl border border-border bg-surface p-12 text-center">
-        <div className="mb-4 text-4xl">👥</div>
-        <p className="text-lg font-medium text-foreground">No users registered yet.</p>
-        <p className="mt-2 text-sm text-foreground/50">When users register, their data will appear here.</p>
+        <div className="mb-4 text-4xl">�</div>
+        <p className="text-lg font-medium text-foreground">No records found for this date</p>
+        <p className="mt-2 text-sm text-foreground/50">
+          {dateFilter ? `No users have records for ${formatDate(dateFilter)}` : "Try selecting a different date"}
+        </p>
       </div>
     );
   }
@@ -125,21 +141,21 @@ export default function AdminUsersTable() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
-            {/* <div className="relative">
-              <label className="mb-1 block text-xs font-medium text-foreground/60 sm:sr-only">Join Date</label>
+            <div className="relative">
+              <label className="mb-1 block text-xs font-medium text-foreground/60 sm:sr-only">Record Date</label>
               <input
                 type="date"
                 value={dateFilter}
                 onChange={(e) => setDateFilter(e.target.value)}
                 className="w-full rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 sm:rounded-xl sm:px-4 sm:py-2.5 sm:w-auto"
               />
-            </div> */}
+            </div>
           </div>
           {(searchQuery || dateFilter) && (
             <button
               onClick={() => {
                 setSearchQuery("");
-                setDateFilter("");
+                setDateFilter(todayISO());
               }}
               className="rounded-lg bg-primary-500 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-600 transition-colors sm:rounded-xl sm:px-4 sm:py-2.5"
             >
@@ -156,7 +172,7 @@ export default function AdminUsersTable() {
 
       {/* Stats Cards - Compact */}
       <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-2">
-        <div className="relative overflow-hidden rounded-lg border border-border bg-gradient-to-br from-primary-500/5 via-primary-500/10 to-primary-600/5 p-3 shadow-sm sm:rounded-xl sm:p-4">
+        <div className="relative overflow-hidden rounded-lg border border-border bg-linear-to-br from-primary-500/5 via-primary-500/10 to-primary-600/5 p-3 shadow-sm sm:rounded-xl sm:p-4">
           <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-primary-500/10" />
           <div className="relative">
             <div className="mb-1 flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500/10 text-primary-600 sm:h-10 sm:w-10">
@@ -168,7 +184,7 @@ export default function AdminUsersTable() {
             <p className="text-lg font-bold text-foreground sm:text-xl">{totalUsers}</p>
           </div>
         </div>
-        <div className="relative overflow-hidden rounded-lg border border-border bg-gradient-to-br from-green-500/5 via-green-500/10 to-green-600/5 p-3 shadow-sm sm:rounded-xl sm:p-4">
+        <div className="relative overflow-hidden rounded-lg border border-border bg-linear-to-br from-green-500/5 via-green-500/10 to-green-600/5 p-3 shadow-sm sm:rounded-xl sm:p-4">
           <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-green-500/10" />
           <div className="relative">
             <div className="mb-1 flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600 sm:h-10 sm:w-10">
@@ -203,7 +219,7 @@ export default function AdminUsersTable() {
             {users.map((u) => (
               <div
                 key={u.id}
-                className="overflow-hidden rounded-lg border border-border bg-gradient-to-br from-surface to-surface-muted/30 p-3 shadow-sm transition-all hover:shadow-md hover:border-primary-200"
+                className="overflow-hidden rounded-lg border border-border bg-linear-to-br from-surface to-surface-muted/30 p-3 shadow-sm transition-all hover:shadow-md hover:border-primary-200"
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
@@ -220,7 +236,7 @@ export default function AdminUsersTable() {
                 <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1.5 border-t border-border pt-2">
                   <div>
                     <p className="text-[9px] uppercase tracking-wide text-foreground/45">
-                      Today's Prayer
+                      Prayer
                     </p>
                     <p className="text-xs font-medium text-foreground">
                       {u.analytics.todayLoggedCount}/{u.analytics.totalPrayers}
@@ -228,7 +244,7 @@ export default function AdminUsersTable() {
                   </div>
                   <div>
                     <p className="text-[9px] uppercase tracking-wide text-foreground/45">
-                      Today's Zikr
+                      Zikr
                     </p>
                     <p className="text-xs font-medium text-foreground">
                       {u.analytics.zikrToday}
@@ -251,12 +267,18 @@ export default function AdminUsersTable() {
                     </p>
                   </div>
                 </div>
+                <button
+                  onClick={() => handleViewDetail(u.id)}
+                  className="mt-2 w-full rounded-lg bg-primary-500 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-600 transition-colors"
+                >
+                  Detail Record
+                </button>
               </div>
             ))}
           </div>
 
           {/* Desktop / tablet: full table */}
-          <div className="hidden overflow-x-auto rounded-xl border border-border bg-gradient-to-br from-surface to-surface-muted/30 shadow-sm sm:block">
+          <div className="hidden overflow-x-auto rounded-xl border border-border bg-linear-to-br from-surface to-surface-muted/30 shadow-sm sm:block">
             <table className="w-full min-w-225 text-left text-sm">
               <thead>
                 <tr className="border-b border-border bg-surface-muted text-xs uppercase tracking-wide text-foreground/50">
@@ -264,10 +286,11 @@ export default function AdminUsersTable() {
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">Role</th>
                   <th className="px-4 py-3 font-medium">Join Date</th>
-                  <th className="px-4 py-3 font-medium">Today's Prayer</th>
-                  <th className="px-4 py-3 font-medium">Today's Zikr</th>
+                  <th className="px-4 py-3 font-medium">Prayer</th>
+                  <th className="px-4 py-3 font-medium">Zikr</th>
                   <th className="px-4 py-3 font-medium">Tilawat</th>
                   <th className="px-4 py-3 font-medium">Hifazat</th>
+                  <th className="px-4 py-3 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -290,6 +313,14 @@ export default function AdminUsersTable() {
                     </td>
                     <td className="px-4 py-3 text-foreground">
                       {u.analytics.hifazatToday}/{u.analytics.hifazatTarget}
+                    </td>
+                    <td className="px-4 py-3">
+                      <button
+                        onClick={() => handleViewDetail(u.id)}
+                        className="rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-600 transition-colors"
+                      >
+                        Detail Record
+                      </button>
                     </td>
                   </tr>
                 ))}

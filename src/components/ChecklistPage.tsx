@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { todayISO, formatDisplayDate } from "@/lib/prayerMeta";
 import { isFriday } from "@/lib/checklistMeta";
+import AddCustomItem from "@/components/AddCustomItem";
+import { isFutureDate } from "@/lib/dateUtils";
 
 type ChecklistItemDef = {
   key: string;
@@ -29,6 +31,16 @@ export default function ChecklistPage({
   const [done, setDone] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  function handleDateChange(newDate: string) {
+    if (isFutureDate(newDate)) {
+      toast.error("Cannot select future date", {
+        description: "Please select today or a past date.",
+      });
+      return;
+    }
+    setDate(newDate);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -107,7 +119,7 @@ export default function ChecklistPage({
             id="date"
             type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e) => handleDateChange(e.target.value)}
             className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm outline-none focus:border-primary-400"
           />
         </div>

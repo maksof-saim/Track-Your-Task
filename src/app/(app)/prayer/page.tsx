@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { PRAYERS, STATUSES, todayISO, formatDisplayDate, type PrayerKey, type StatusKey } from "@/lib/prayerMeta";
 import AddCustomItem from "@/components/AddCustomItem";
+import { isFutureDate } from "@/lib/dateUtils";
 
 type EntryMap = Partial<Record<PrayerKey, StatusKey>>;
 type CustomPrayer = { id: string; name: string };
@@ -24,6 +25,16 @@ export default function PrayerPage() {
   const [customEntries, setCustomEntries] = useState<CustomEntryMap>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  function handleDateChange(newDate: string) {
+    if (isFutureDate(newDate)) {
+      toast.error("Cannot select future date", {
+        description: "Please select today or a past date.",
+      });
+      return;
+    }
+    setDate(newDate);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -156,7 +167,7 @@ export default function PrayerPage() {
             id="date"
             type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e) => handleDateChange(e.target.value)}
             className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm outline-none focus:border-primary-400"
           />
         </div>

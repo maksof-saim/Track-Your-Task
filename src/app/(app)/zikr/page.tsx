@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { todayISO, formatDisplayDate } from "@/lib/prayerMeta";
 import { AZKAAR_TARGET_ITEMS } from "@/lib/checklistMeta";
+import { isFutureDate } from "@/lib/dateUtils";
 
 type ZikrMode = "COUNT" | "KASRAT";
 type ZikrEntry = { name: string; count: number; mode: ZikrMode };
@@ -22,6 +23,16 @@ export default function ZikrPage() {
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<string | null>(null);
+
+  function handleDateChange(newDate: string) {
+    if (isFutureDate(newDate)) {
+      toast.error("Cannot select future date", {
+        description: "Please select today or a past date.",
+      });
+      return;
+    }
+    setDate(newDate);
+  }
 
   useEffect(() => {
     setLoading(true);
@@ -116,7 +127,7 @@ export default function ZikrPage() {
           <input
             type="date"
             value={date}
-            onChange={(e) => setDate(e.target.value)}
+            onChange={(e) => handleDateChange(e.target.value)}
             className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 sm:rounded-xl sm:px-4 sm:py-2.5"
           />
           <span className="text-xs text-foreground/60">{formatDisplayDate(date)}</span>
@@ -149,7 +160,7 @@ export default function ZikrPage() {
                     name={`mode-${name}`}
                     checked={draft.mode === "COUNT"}
                     onChange={() => updateDraft(name, { mode: "COUNT" })}
-                    className="h-4 w-4 accent-[var(--color-primary-500)]"
+                    className="h-4 w-4 accent-primary-500"
                   />
                   <span className="min-w-0 flex-1">
                     <span className="block text-sm font-semibold text-foreground">Apna count</span>
@@ -173,7 +184,7 @@ export default function ZikrPage() {
                     name={`mode-${name}`}
                     checked={draft.mode === "KASRAT"}
                     onChange={() => updateDraft(name, { mode: "KASRAT" })}
-                    className="h-4 w-4 accent-[var(--color-gold-500)]"
+                    className="h-4 w-4 accent-gold-500"
                   />
                   <span>
                     <span className="block text-sm font-semibold text-foreground">Kasrat se</span>
