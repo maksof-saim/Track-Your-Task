@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { todayISO, formatDisplayDate } from "@/lib/prayerMeta";
 import { isFriday } from "@/lib/checklistMeta";
@@ -27,7 +27,8 @@ export default function ChecklistPage({
   items: readonly ChecklistItemDef[];
 }) {
   const router = useRouter();
-  const [date, setDate] = useState(todayISO());
+  const searchParams = useSearchParams();
+  const [date, setDate] = useState(searchParams.get("date") || todayISO());
   const [done, setDone] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);

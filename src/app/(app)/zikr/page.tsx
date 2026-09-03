@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { todayISO, formatDisplayDate } from "@/lib/prayerMeta";
 import { AZKAAR_TARGET_ITEMS } from "@/lib/checklistMeta";
@@ -18,7 +18,8 @@ const initialDraft = (entry?: ZikrEntry): Draft => ({
 
 export default function ZikrPage() {
   const router = useRouter();
-  const [date, setDate] = useState(todayISO());
+  const searchParams = useSearchParams();
+  const [date, setDate] = useState(searchParams.get("date") || todayISO());
   const [entries, setEntries] = useState<ZikrEntry[]>([]);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [loading, setLoading] = useState(true);

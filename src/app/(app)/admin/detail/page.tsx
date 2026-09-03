@@ -101,12 +101,28 @@ export default function AdminUserDetailPage() {
       <div className="mx-auto max-w-4xl">
         <div className="rounded-2xl border border-status-qaza/30 bg-status-qaza/5 p-8 text-center">
           <p className="text-status-qaza font-medium">{error}</p>
-          <button
-            onClick={() => router.push("/admin")}
-            className="mt-4 rounded-lg bg-primary-500 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600"
-          >
-            Back to Admin
-          </button>
+          <p className="mt-2 text-sm text-foreground/60">
+            Please select a valid record date between 29 August 2026 and the current date.
+          </p>
+          <div className="mt-6 flex justify-center gap-3">
+            <button
+              onClick={() => router.push("/admin")}
+              className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-foreground hover:border-primary-300"
+            >
+              ← Back to Admin
+            </button>
+            {userId && (
+              <button
+                onClick={() => {
+                  setDate(todayISO());
+                  setError(null);
+                }}
+                className="rounded-lg bg-primary-500 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600"
+              >
+                Go to Today
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );

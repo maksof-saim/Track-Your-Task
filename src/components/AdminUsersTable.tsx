@@ -93,29 +93,21 @@ export default function AdminUsersTable() {
     return (
       <div className="rounded-2xl border border-status-qaza/30 bg-status-qaza/5 p-8 text-center">
         <p className="text-status-qaza font-medium">{error}</p>
-      </div>
-    );
-  }
-
-  if (!users) {
-    return (
-      <div className="flex items-center justify-center rounded-2xl border border-border bg-surface p-12">
-        <div className="text-center">
-          <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
-          <p className="text-sm text-foreground/60">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (users.length === 0) {
-    return (
-      <div className="rounded-2xl border border-border bg-surface p-12 text-center">
-        <div className="mb-4 text-4xl">�</div>
-        <p className="text-lg font-medium text-foreground">No records found for this date</p>
-        <p className="mt-2 text-sm text-foreground/50">
-          {dateFilter ? `No users have records for ${formatDate(dateFilter)}` : "Try selecting a different date"}
+        <p className="mt-2 text-sm text-foreground/60">
+          Please select a valid record date between 29 August 2026 and the current date.
         </p>
+        <div className="mt-6 flex justify-center gap-3">
+          <button
+            onClick={() => {
+              setSearchQuery("");
+              setDateFilter(todayISO());
+              setError(null);
+            }}
+            className="rounded-lg bg-primary-500 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600"
+          >
+            Reset to Today
+          </button>
+        </div>
       </div>
     );
   }
@@ -170,163 +162,174 @@ export default function AdminUsersTable() {
         )}
       </div>
 
-      {/* Stats Cards - Compact */}
-      <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-2">
-        <div className="relative overflow-hidden rounded-lg border border-border bg-linear-to-br from-primary-500/5 via-primary-500/10 to-primary-600/5 p-3 shadow-sm sm:rounded-xl sm:p-4">
-          <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-primary-500/10" />
-          <div className="relative">
-            <div className="mb-1 flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500/10 text-primary-600 sm:h-10 sm:w-10">
-              <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
-            </div>
-            <p className="text-[10px] font-medium text-foreground/60 sm:text-[11px]">Total Users</p>
-            <p className="text-lg font-bold text-foreground sm:text-xl">{totalUsers}</p>
-          </div>
-        </div>
-        <div className="relative overflow-hidden rounded-lg border border-border bg-linear-to-br from-green-500/5 via-green-500/10 to-green-600/5 p-3 shadow-sm sm:rounded-xl sm:p-4">
-          <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-green-500/10" />
-          <div className="relative">
-            <div className="mb-1 flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600 sm:h-10 sm:w-10">
-              <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <p className="text-[10px] font-medium text-foreground/60 sm:text-[11px]">Active Today</p>
-            <p className="text-lg font-bold text-foreground sm:text-xl">{activeUsers}</p>
-          </div>
-        </div>
-      </div>
-
-      {/* User List */}
-      {!users ? (
+      {/* Loading State */}
+      {!users && (
         <div className="flex items-center justify-center rounded-xl border border-border bg-surface p-8 sm:rounded-2xl sm:p-12">
           <div className="text-center">
             <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
             <p className="text-sm text-foreground/60">Loading...</p>
           </div>
         </div>
-      ) : users.length === 0 ? (
-        <div className="rounded-xl border border-border bg-surface p-8 text-center sm:rounded-2xl sm:p-12">
-          <div className="mb-4 text-4xl">🔍</div>
-          <p className="text-base font-medium text-foreground sm:text-lg">No users found</p>
-          <p className="mt-2 text-sm text-foreground/50">Try changing your filters</p>
+      )}
+
+      {/* Empty State */}
+      {users && users.length === 0 && (
+        <div className="rounded-2xl border border-border bg-surface p-12 text-center">
+          <div className="mb-4 text-4xl">📅</div>
+          <p className="text-lg font-medium text-foreground">No records found for this date</p>
+          <p className="mt-2 text-sm text-foreground/50">
+            {dateFilter ? `No users have records for ${formatDate(dateFilter)}` : "Try selecting a different date"}
+          </p>
         </div>
-      ) : (
+      )}
+
+      {/* Stats Cards & User List - Only show when users exist */}
+      {users && users.length > 0 && (
         <>
-          {/* Mobile: stacked cards, no horizontal scroll */}
-          <div className="flex flex-col gap-2 sm:hidden">
-            {users.map((u) => (
-              <div
-                key={u.id}
-                className="overflow-hidden rounded-lg border border-border bg-linear-to-br from-surface to-surface-muted/30 p-3 shadow-sm transition-all hover:shadow-md hover:border-primary-200"
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold text-foreground text-sm">{u.name}</p>
-                    <p className="truncate text-[11px] text-foreground/60">{u.email}</p>
-                  </div>
-                  <RoleBadge role={u.role} />
+          {/* Stats Cards - Compact */}
+          <div className="grid grid-cols-2 gap-2 sm:gap-3 sm:grid-cols-2">
+            <div className="relative overflow-hidden rounded-lg border border-border bg-linear-to-br from-primary-500/5 via-primary-500/10 to-primary-600/5 p-3 shadow-sm sm:rounded-xl sm:p-4">
+              <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-primary-500/10" />
+              <div className="relative">
+                <div className="mb-1 flex h-8 w-8 items-center justify-center rounded-lg bg-primary-500/10 text-primary-600 sm:h-10 sm:w-10">
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
                 </div>
-
-                <p className="mt-1 text-[10px] text-foreground/50">
-                  Joined: {formatDate(u.createdAt)}
-                </p>
-
-                <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1.5 border-t border-border pt-2">
-                  <div>
-                    <p className="text-[9px] uppercase tracking-wide text-foreground/45">
-                      Prayer
-                    </p>
-                    <p className="text-xs font-medium text-foreground">
-                      {u.analytics.todayLoggedCount}/{u.analytics.totalPrayers}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] uppercase tracking-wide text-foreground/45">
-                      Zikr
-                    </p>
-                    <p className="text-xs font-medium text-foreground">
-                      {u.analytics.zikrToday}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] uppercase tracking-wide text-foreground/45">
-                      Tilawat
-                    </p>
-                    <p className="text-xs font-medium text-foreground">
-                      {u.analytics.tilawatToday}/{u.analytics.tilawatTarget}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-[9px] uppercase tracking-wide text-foreground/45">
-                      Hifazat
-                    </p>
-                    <p className="text-xs font-medium text-foreground">
-                      {u.analytics.hifazatToday}/{u.analytics.hifazatTarget}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => handleViewDetail(u.id)}
-                  className="mt-2 w-full rounded-lg bg-primary-500 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-600 transition-colors"
-                >
-                  Detail Record
-                </button>
+                <p className="text-[10px] font-medium text-foreground/60 sm:text-[11px]">Total Users</p>
+                <p className="text-lg font-bold text-foreground sm:text-xl">{totalUsers}</p>
               </div>
-            ))}
+            </div>
+            <div className="relative overflow-hidden rounded-lg border border-border bg-linear-to-br from-green-500/5 via-green-500/10 to-green-600/5 p-3 shadow-sm sm:rounded-xl sm:p-4">
+              <div className="absolute -right-4 -top-4 h-16 w-16 rounded-full bg-green-500/10" />
+              <div className="relative">
+                <div className="mb-1 flex h-8 w-8 items-center justify-center rounded-lg bg-green-500/10 text-green-600 sm:h-10 sm:w-10">
+                  <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <p className="text-[10px] font-medium text-foreground/60 sm:text-[11px]">Active Today</p>
+                <p className="text-lg font-bold text-foreground sm:text-xl">{activeUsers}</p>
+              </div>
+            </div>
           </div>
 
-          {/* Desktop / tablet: full table */}
-          <div className="hidden overflow-x-auto rounded-xl border border-border bg-linear-to-br from-surface to-surface-muted/30 shadow-sm sm:block">
-            <table className="w-full min-w-225 text-left text-sm">
-              <thead>
-                <tr className="border-b border-border bg-surface-muted text-xs uppercase tracking-wide text-foreground/50">
-                  <th className="px-4 py-3 font-medium">Name</th>
-                  <th className="px-4 py-3 font-medium">Email</th>
-                  <th className="px-4 py-3 font-medium">Role</th>
-                  <th className="px-4 py-3 font-medium">Join Date</th>
-                  <th className="px-4 py-3 font-medium">Prayer</th>
-                  <th className="px-4 py-3 font-medium">Zikr</th>
-                  <th className="px-4 py-3 font-medium">Tilawat</th>
-                  <th className="px-4 py-3 font-medium">Hifazat</th>
-                  <th className="px-4 py-3 font-medium">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {users.map((u) => (
-                  <tr key={u.id} className="border-b border-border last:border-0 hover:bg-surface-muted/50 transition-colors">
-                    <td className="px-4 py-3 font-medium text-foreground">{u.name}</td>
-                    <td className="px-4 py-3 text-foreground/70">{u.email}</td>
-                    <td className="px-4 py-3">
-                      <RoleBadge role={u.role} />
-                    </td>
-                    <td className="px-4 py-3 text-foreground/70">
-                      {formatDate(u.createdAt)}
-                    </td>
-                    <td className="px-4 py-3 text-foreground">
-                      {u.analytics.todayLoggedCount}/{u.analytics.totalPrayers}
-                    </td>
-                    <td className="px-4 py-3 text-foreground">{u.analytics.zikrToday}</td>
-                    <td className="px-4 py-3 text-foreground">
-                      {u.analytics.tilawatToday}/{u.analytics.tilawatTarget}
-                    </td>
-                    <td className="px-4 py-3 text-foreground">
-                      {u.analytics.hifazatToday}/{u.analytics.hifazatTarget}
-                    </td>
-                    <td className="px-4 py-3">
-                      <button
-                        onClick={() => handleViewDetail(u.id)}
-                        className="rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-600 transition-colors"
-                      >
-                        Detail Record
-                      </button>
-                    </td>
+          {/* User List */}
+          <>
+            {/* Mobile: stacked cards, no horizontal scroll */}
+            <div className="flex flex-col gap-2 sm:hidden">
+              {users.map((u) => (
+                <div
+                  key={u.id}
+                  className="overflow-hidden rounded-lg border border-border bg-linear-to-br from-surface to-surface-muted/30 p-3 shadow-sm transition-all hover:shadow-md hover:border-primary-200"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate font-semibold text-foreground text-sm">{u.name}</p>
+                      <p className="truncate text-[11px] text-foreground/60">{u.email}</p>
+                    </div>
+                    <RoleBadge role={u.role} />
+                  </div>
+
+                  <p className="mt-1 text-[10px] text-foreground/50">
+                    Joined: {formatDate(u.createdAt)}
+                  </p>
+
+                  <div className="mt-2 grid grid-cols-2 gap-x-2 gap-y-1.5 border-t border-border pt-2">
+                    <div>
+                      <p className="text-[9px] uppercase tracking-wide text-foreground/45">
+                        Prayer
+                      </p>
+                      <p className="text-xs font-medium text-foreground">
+                        {u.analytics.todayLoggedCount}/{u.analytics.totalPrayers}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase tracking-wide text-foreground/45">
+                        Zikr
+                      </p>
+                      <p className="text-xs font-medium text-foreground">
+                        {u.analytics.zikrToday}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase tracking-wide text-foreground/45">
+                        Tilawat
+                      </p>
+                      <p className="text-xs font-medium text-foreground">
+                        {u.analytics.tilawatToday}/{u.analytics.tilawatTarget}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-[9px] uppercase tracking-wide text-foreground/45">
+                        Hifazat
+                      </p>
+                      <p className="text-xs font-medium text-foreground">
+                        {u.analytics.hifazatToday}/{u.analytics.hifazatTarget}
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => handleViewDetail(u.id)}
+                    className="mt-2 w-full rounded-lg bg-primary-500 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-600 transition-colors"
+                  >
+                    Detail Record
+                  </button>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop / tablet: full table */}
+            <div className="hidden overflow-x-auto rounded-xl border border-border bg-linear-to-br from-surface to-surface-muted/30 shadow-sm sm:block">
+              <table className="w-full min-w-225 text-left text-sm">
+                <thead>
+                  <tr className="border-b border-border bg-surface-muted text-xs uppercase tracking-wide text-foreground/50">
+                    <th className="px-4 py-3 font-medium">Name</th>
+                    <th className="px-4 py-3 font-medium">Email</th>
+                    <th className="px-4 py-3 font-medium">Role</th>
+                    <th className="px-4 py-3 font-medium">Join Date</th>
+                    <th className="px-4 py-3 font-medium">Prayer</th>
+                    <th className="px-4 py-3 font-medium">Zikr</th>
+                    <th className="px-4 py-3 font-medium">Tilawat</th>
+                    <th className="px-4 py-3 font-medium">Hifazat</th>
+                    <th className="px-4 py-3 font-medium">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody>
+                  {users.map((u) => (
+                    <tr key={u.id} className="border-b border-border last:border-0 hover:bg-surface-muted/50 transition-colors">
+                      <td className="px-4 py-3 font-medium text-foreground">{u.name}</td>
+                      <td className="px-4 py-3 text-foreground/70">{u.email}</td>
+                      <td className="px-4 py-3">
+                        <RoleBadge role={u.role} />
+                      </td>
+                      <td className="px-4 py-3 text-foreground/70">
+                        {formatDate(u.createdAt)}
+                      </td>
+                      <td className="px-4 py-3 text-foreground">
+                        {u.analytics.todayLoggedCount}/{u.analytics.totalPrayers}
+                      </td>
+                      <td className="px-4 py-3 text-foreground">{u.analytics.zikrToday}</td>
+                      <td className="px-4 py-3 text-foreground">
+                        {u.analytics.tilawatToday}/{u.analytics.tilawatTarget}
+                      </td>
+                      <td className="px-4 py-3 text-foreground">
+                        {u.analytics.hifazatToday}/{u.analytics.hifazatTarget}
+                      </td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => handleViewDetail(u.id)}
+                          className="rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-600 transition-colors"
+                        >
+                          Detail Record
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         </>
       )}
     </div>
