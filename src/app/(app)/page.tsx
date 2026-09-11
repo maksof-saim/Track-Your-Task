@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { PRAYERS, formatDisplayDate } from "@/lib/prayerMeta";
+import { PRAYERS, formatDisplayDate, getPrayerLabel } from "@/lib/prayerMeta";
 import { ChartIcon, PrayerIcon, TasbihIcon, BookIcon, ShieldIcon } from "@/components/icons";
 
 type Analytics = {
@@ -142,10 +142,11 @@ export default function DashboardPage() {
                   <span className="text-xs text-foreground/60">{prayer.label}</span>
                   {data.grid.map((day) => {
                     const status = day.statuses[prayer.key];
+                    const dayLabel = prayer.key === "DHUHR" && new Date(day.date).getDay() === 5 ? "Jummah" : prayer.label;
                     return (
                       <span
                         key={day.date}
-                        title={`${prayer.label} · ${formatDisplayDate(day.date)} · ${status ?? "Record nahi"}`}
+                        title={`${dayLabel} · ${formatDisplayDate(day.date)} · ${status ?? "Record nahi"}`}
                         className={`h-5 rounded-sm ${status ? CELL_STYLES[status] : "bg-status-empty"}`}
                       />
                     );

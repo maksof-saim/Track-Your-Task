@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { todayISO } from "@/lib/prayerMeta";
+import { todayISO, getPrayerLabel } from "@/lib/prayerMeta";
 import { getPreviousDay, getNextDay, formatDisplayDate } from "@/lib/dateUtils";
 import { PRAYERS, STATUSES } from "@/lib/prayerMeta";
 
@@ -326,7 +326,7 @@ export default function AdminUserDetailPage() {
             const status = log?.status;
             return (
               <div key={prayer.key} className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3">
-                <span className="font-medium text-foreground">{prayer.label}</span>
+                <span className="font-medium text-foreground">{getPrayerLabel(prayer.key, date)}</span>
                 {status ? (
                   <span className={`rounded-lg border px-3 py-1 text-xs font-semibold ${STATUS_STYLES[status]}`}>
                     {STATUSES.find(s => s.key === status)?.label || status}

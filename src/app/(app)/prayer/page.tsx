@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { PRAYERS, STATUSES, todayISO, formatDisplayDate, type PrayerKey, type StatusKey } from "@/lib/prayerMeta";
+import { PRAYERS, STATUSES, todayISO, formatDisplayDate, getPrayerLabel, type PrayerKey, type StatusKey } from "@/lib/prayerMeta";
 import AddCustomItem from "@/components/AddCustomItem";
 import { isFutureDate } from "@/lib/dateUtils";
 
@@ -184,7 +184,7 @@ export default function PrayerPage() {
             key={prayer.key}
             className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between"
           >
-            <span className="text-base font-medium text-foreground">{prayer.label}</span>
+            <span className="text-base font-medium text-foreground">{getPrayerLabel(prayer.key, date)}</span>
             <div className="grid grid-cols-3 gap-2">
               {STATUSES.map((status) => {
                 const active = entries[prayer.key] === status.key;

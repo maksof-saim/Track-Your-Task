@@ -41,3 +41,16 @@ export function formatDisplayDate(iso: string): string {
     month: "short",
   });
 }
+
+export function isFriday(iso: string): boolean {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).getDay() === 5;
+}
+
+export function getPrayerLabel(prayerKey: PrayerKey, date: string): string {
+  if (prayerKey === "DHUHR" && isFriday(date)) {
+    return "Jummah";
+  }
+  const prayer = PRAYERS.find((p) => p.key === prayerKey);
+  return prayer?.label || prayerKey;
+}
