@@ -7,6 +7,25 @@ import { todayISO } from "@/lib/prayerMeta";
 // Application launch date - records before this date should not be shown
 const APP_LAUNCH_DATE = "2026-08-29";
 
+// Retry helper function for database operations
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries = 2,
+  delayMs = 500
+): Promise<T> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      if (i === maxRetries - 1) throw error;
+      console.log(`Retry ${i + 1}/${maxRetries} after ${delayMs}ms`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      delayMs *= 2; // Exponential backoff
+    }
+  }
+  throw new Error("Max retries exceeded");
+}
+
 export async function GET(request: Request) {
   const session = await auth();
   if (!session?.user?.id) {
@@ -35,10 +54,12 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: `Records before ${APP_LAUNCH_DATE} are not available` }, { status: 400 });
   }
 
-  let users = await prisma.user.findMany({
-    orderBy: { createdAt: "asc" },
-    select: { id: true, name: true, email: true, role: true, createdAt: true },
-  });
+  let users = await withRetry(() =>
+    prisma.user.findMany({
+      orderBy: { createdAt: "asc" },
+      select: { id: true, name: true, email: true, role: true, createdAt: true },
+    })
+  );
 
   // Apply search filter server-side
   if (searchQuery) {
@@ -60,23 +81,29 @@ export async function GET(request: Request) {
     const dateValue = new Date(`${dateFilter}T00:00:00.000Z`);
 
     // Get user IDs who have any record on the filtered date
-    const prayerLogs = await prisma.prayerLog.findMany({
-      where: { date: dateValue },
-      select: { userId: true },
-      distinct: ["userId"],
-    });
-
-    const zikrLogs = await prisma.zikrLog.findMany({
-      where: { date: dateValue },
-      select: { userId: true },
-      distinct: ["userId"],
-    });
-
-    const checklistLogs = await prisma.checklistLog.findMany({
-      where: { date: dateValue },
-      select: { userId: true },
-      distinct: ["userId"],
-    });
+    const [prayerLogs, zikrLogs, checklistLogs] = await Promise.all([
+      withRetry(() =>
+        prisma.prayerLog.findMany({
+          where: { date: dateValue },
+          select: { userId: true },
+          distinct: ["userId"],
+        })
+      ),
+      withRetry(() =>
+        prisma.zikrLog.findMany({
+          where: { date: dateValue },
+          select: { userId: true },
+          distinct: ["userId"],
+        })
+      ),
+      withRetry(() =>
+        prisma.checklistLog.findMany({
+          where: { date: dateValue },
+          select: { userId: true },
+          distinct: ["userId"],
+        })
+      ),
+    ]);
 
     const userIdsWithRecords = new Set([
       ...prayerLogs.map(l => l.userId),
@@ -96,8 +123,8 @@ export async function GET(request: Request) {
   const rows = await Promise.all(
     filteredUsers.map(async (user) => ({
       ...user,
-      analytics: await getUserAnalytics(user.id, targetDate),
-    })),
+      analytics: await withRetry(() => getUserAnalytics(user.id, targetDate)),
+    }))
   );
 
   return NextResponse.json({ users: rows });

@@ -56,6 +56,10 @@ export default function AdminUsersTable() {
     router.push(`/admin/detail?userId=${userId}&date=${dateFilter}`);
   };
 
+  const handleView40Day = (userId: string) => {
+    router.push(`/admin/40day-record?userId=${userId}`);
+  };
+
   const fetchUsers = () => {
     setLoading(true);
     const params = new URLSearchParams();
@@ -269,12 +273,20 @@ export default function AdminUsersTable() {
                       </p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => handleViewDetail(u.id)}
-                    className="mt-2 w-full rounded-lg bg-primary-500 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-600 transition-colors"
-                  >
-                    Detail Record
-                  </button>
+                  <div className="mt-2 flex gap-2">
+                    <button
+                      onClick={() => handleViewDetail(u.id)}
+                      className="flex-1 rounded-lg bg-primary-500 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-600 transition-colors"
+                    >
+                      Detail Record
+                    </button>
+                    <button
+                      onClick={() => handleView40Day(u.id)}
+                      className="flex-1 rounded-lg border border-border bg-surface-muted px-3 py-2 text-xs font-semibold text-foreground hover:border-primary-300 transition-colors"
+                    >
+                      40 Days
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
@@ -317,12 +329,20 @@ export default function AdminUsersTable() {
                         {u.analytics.hifazatToday}/{u.analytics.hifazatTarget}
                       </td>
                       <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleViewDetail(u.id)}
-                          className="rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-600 transition-colors"
-                        >
-                          Detail Record
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleViewDetail(u.id)}
+                            className="rounded-lg bg-primary-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-primary-600 transition-colors"
+                          >
+                            Detail Record
+                          </button>
+                          <button
+                            onClick={() => handleView40Day(u.id)}
+                            className="rounded-lg border border-border bg-surface-muted px-3 py-1.5 text-xs font-semibold text-foreground hover:border-primary-300 transition-colors"
+                          >
+                            40 Days
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}

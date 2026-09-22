@@ -1,10 +1,29 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { todayISO } from "@/lib/prayerMeta";
+import { todayISO, getPrayerLabel } from "@/lib/prayerMeta";
 
 // Application launch date - records before this date should not be shown
 const APP_LAUNCH_DATE = "2026-08-29";
+
+// Retry helper function for database operations
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  maxRetries = 2,
+  delayMs = 500
+): Promise<T> {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      if (i === maxRetries - 1) throw error;
+      console.log(`Retry ${i + 1}/${maxRetries} after ${delayMs}ms`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+      delayMs *= 2; // Exponential backoff
+    }
+  }
+  throw new Error("Max retries exceeded");
+}
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -39,10 +58,12 @@ export async function GET(request: Request) {
   const dateValue = new Date(`${date}T00:00:00.000Z`);
 
   // Get user info
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, name: true, email: true, role: true, createdAt: true },
-  });
+  const user = await withRetry(() =>
+    prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, name: true, email: true, role: true, createdAt: true },
+    })
+  );
 
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -56,50 +77,56 @@ export async function GET(request: Request) {
     }, { status: 400 });
   }
 
-  // Get prayer logs for the date
-  const prayerLogs = await prisma.prayerLog.findMany({
-    where: { userId, date: dateValue, customPrayerId: null },
-  });
-
-  // Get custom prayer logs for the date
-  const customPrayerLogs = await prisma.prayerLog.findMany({
-    where: { userId, date: dateValue, customPrayerId: { not: null } },
-    include: { customPrayer: true },
-  });
-
-  // Get zikr logs for the date
-  const zikrLogs = await prisma.zikrLog.findMany({
-    where: { userId, date: dateValue, customZikrId: null },
-  });
-
-  // Get custom zikr logs for the date
-  const customZikrLogs = await prisma.zikrLog.findMany({
-    where: { userId, date: dateValue, customZikrId: { not: null } },
-    include: { customZikr: true },
-  });
-
-  // Get checklist logs for the date
-  const checklistLogs = await prisma.checklistLog.findMany({
-    where: { userId, date: dateValue, customTilawatId: null, customHifazatId: null },
-  });
-
-  // Get custom tilawat logs for the date
-  const customTilawatLogs = await prisma.checklistLog.findMany({
-    where: { userId, date: dateValue, customTilawatId: { not: null } },
-    include: { customTilawat: true },
-  });
-
-  // Get custom hifazat logs for the date
-  const customHifazatLogs = await prisma.checklistLog.findMany({
-    where: { userId, date: dateValue, customHifazatId: { not: null } },
-    include: { customHifazat: true },
-  });
+  // Get all logs for the date
+  const [prayerLogs, customPrayerLogs, zikrLogs, customZikrLogs, checklistLogs, customTilawatLogs, customHifazatLogs] = await Promise.all([
+    withRetry(() =>
+      prisma.prayerLog.findMany({
+        where: { userId, date: dateValue, customPrayerId: null },
+      })
+    ),
+    withRetry(() =>
+      prisma.prayerLog.findMany({
+        where: { userId, date: dateValue, customPrayerId: { not: null } },
+        include: { customPrayer: true },
+      })
+    ),
+    withRetry(() =>
+      prisma.zikrLog.findMany({
+        where: { userId, date: dateValue, customZikrId: null },
+      })
+    ),
+    withRetry(() =>
+      prisma.zikrLog.findMany({
+        where: { userId, date: dateValue, customZikrId: { not: null } },
+        include: { customZikr: true },
+      })
+    ),
+    withRetry(() =>
+      prisma.checklistLog.findMany({
+        where: { userId, date: dateValue, customTilawatId: null, customHifazatId: null },
+      })
+    ),
+    withRetry(() =>
+      prisma.checklistLog.findMany({
+        where: { userId, date: dateValue, customTilawatId: { not: null } },
+        include: { customTilawat: true },
+      })
+    ),
+    withRetry(() =>
+      prisma.checklistLog.findMany({
+        where: { userId, date: dateValue, customHifazatId: { not: null } },
+        include: { customHifazat: true },
+      })
+    ),
+  ]);
 
   // Calculate total recorded days for this user
-  const totalRecordedDays = await prisma.prayerLog.groupBy({
-    by: ['date'],
-    where: { userId },
-  });
+  const totalRecordedDays = await withRetry(() =>
+    prisma.prayerLog.groupBy({
+      by: ['date'],
+      where: { userId },
+    })
+  );
 
   return NextResponse.json({
     user,

@@ -18,11 +18,21 @@ type LookupFn = (
 const poolConfig: PoolConfig & { lookup?: LookupFn } = {
   connectionString: process.env.DATABASE_URL,
   lookup: (hostname, _options, callback) => dns.lookup(hostname, { family: 4 }, callback),
+  connectionTimeoutMillis: 60000,
+  idleTimeoutMillis: 30000,
+  max: 5,
 };
 
 const adapter = new PrismaPg(poolConfig);
 
 export const prisma =
-  globalForPrisma.prisma ?? new PrismaClient({ adapter });
+  globalForPrisma.prisma ?? new PrismaClient({
+    adapter,
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+    transactionOptions: {
+      timeout: 60000,
+      maxWait: 60000,
+    },
+  });
 
 if (process.env.NODE_ENV !== "production") globalForPrisma.prisma = prisma;

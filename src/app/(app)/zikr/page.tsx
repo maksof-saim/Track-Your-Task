@@ -75,6 +75,12 @@ export default function ZikrPage() {
         });
         return;
       }
+      if (count === 0) {
+        toast.error("Count cannot be zero", {
+          description: "Please enter a number greater than 0 to save your zikr.",
+        });
+        return;
+      }
       if (count > 1000000) {
         toast.error("Count too large", {
           description: "Count must be less than 1,000,000.",
@@ -140,7 +146,7 @@ export default function ZikrPage() {
           const entry = entries.find((item) => item.name === name);
           const draft = drafts[name] ?? initialDraft(entry);
           const count = Number(draft.count);
-          const hasValidCount = draft.mode === "KASRAT" || (Number.isInteger(count) && count >= 0);
+          const hasValidCount = draft.mode === "KASRAT" || (Number.isInteger(count) && count > 0);
           const isPending = pending === name;
 
           return (
@@ -169,7 +175,7 @@ export default function ZikrPage() {
                   </span>
                   <input
                     type="number"
-                    min="0"
+                    min="1"
                     inputMode="numeric"
                     value={draft.mode === "COUNT" ? draft.count : ""}
                     onChange={(event) => updateDraft(name, { count: event.target.value })}

@@ -181,6 +181,12 @@ export default function AdminUserDetailPage() {
             </div>
             <div className="flex items-center gap-2">
               <button
+                onClick={() => router.push(`/admin/40day-record?userId=${userId}`)}
+                className="rounded-lg bg-primary-500 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-600"
+              >
+                40-Day Record
+              </button>
+              <button
                 onClick={goToPreviousDay}
                 className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300"
               >

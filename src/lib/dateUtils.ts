@@ -3,18 +3,17 @@
  * All date operations should use these utilities to ensure timezone consistency.
  */
 
-// Application timezone - configure based on your requirements
-// Using UTC as the default for consistency, can be changed to a specific timezone
-const APP_TIMEZONE = 'UTC';
+// Application timezone - using local time for day change at midnight
+const APP_TIMEZONE = 'LOCAL';
 
 /**
  * Get the current date in ISO format (YYYY-MM-DD) based on application timezone
  */
 export function getCurrentDate(): string {
   const now = new Date();
-  const year = now.getUTCFullYear();
-  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(now.getUTCDate()).padStart(2, '0');
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
@@ -23,10 +22,10 @@ export function getCurrentDate(): string {
  */
 export function getDateDaysAgo(days: number): string {
   const now = new Date();
-  now.setUTCDate(now.getUTCDate() - days);
-  const year = now.getUTCFullYear();
-  const month = String(now.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(now.getUTCDate()).padStart(2, '0');
+  now.setDate(now.getDate() - days);
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
 
@@ -35,7 +34,7 @@ export function getDateDaysAgo(days: number): string {
  */
 export function formatDisplayDate(iso: string): string {
   const [year, month, day] = iso.split('-').map(Number);
-  return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString('en-GB', {
+  return new Date(year, month - 1, day).toLocaleDateString('en-GB', {
     weekday: 'short',
     day: '2-digit',
     month: 'short',
@@ -48,7 +47,7 @@ export function formatDisplayDate(iso: string): string {
  */
 export function formatShortDate(iso: string): string {
   const [year, month, day] = iso.split('-').map(Number);
-  return new Date(Date.UTC(year, month - 1, day)).toLocaleDateString('en-GB', {
+  return new Date(year, month - 1, day).toLocaleDateString('en-GB', {
     day: '2-digit',
     month: 'short',
     year: 'numeric',
@@ -56,19 +55,19 @@ export function formatShortDate(iso: string): string {
 }
 
 /**
- * Convert ISO date string to Date object at start of day (00:00:00 UTC)
+ * Convert ISO date string to Date object at start of day (00:00:00 local time)
  */
 export function dateToStartOfDay(iso: string): Date {
   const [year, month, day] = iso.split('-').map(Number);
-  return new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+  return new Date(year, month - 1, day, 0, 0, 0, 0);
 }
 
 /**
- * Convert ISO date string to Date object at end of day (23:59:59.999 UTC)
+ * Convert ISO date string to Date object at end of day (23:59:59.999 local time)
  */
 export function dateToEndOfDay(iso: string): Date {
   const [year, month, day] = iso.split('-').map(Number);
-  return new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+  return new Date(year, month - 1, day, 23, 59, 59, 999);
 }
 
 /**
@@ -91,11 +90,11 @@ export function isToday(iso: string): boolean {
  */
 export function getNextDay(iso: string): string {
   const [year, month, day] = iso.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  date.setUTCDate(date.getUTCDate() + 1);
-  const nextYear = date.getUTCFullYear();
-  const nextMonth = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const nextDay = String(date.getUTCDate()).padStart(2, '0');
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() + 1);
+  const nextYear = date.getFullYear();
+  const nextMonth = String(date.getMonth() + 1).padStart(2, '0');
+  const nextDay = String(date.getDate()).padStart(2, '0');
   return `${nextYear}-${nextMonth}-${nextDay}`;
 }
 
@@ -104,11 +103,11 @@ export function getNextDay(iso: string): string {
  */
 export function getPreviousDay(iso: string): string {
   const [year, month, day] = iso.split('-').map(Number);
-  const date = new Date(Date.UTC(year, month - 1, day));
-  date.setUTCDate(date.getUTCDate() - 1);
-  const prevYear = date.getUTCFullYear();
-  const prevMonth = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const prevDay = String(date.getUTCDate()).padStart(2, '0');
+  const date = new Date(year, month - 1, day);
+  date.setDate(date.getDate() - 1);
+  const prevYear = date.getFullYear();
+  const prevMonth = String(date.getMonth() + 1).padStart(2, '0');
+  const prevDay = String(date.getDate()).padStart(2, '0');
   return `${prevYear}-${prevMonth}-${prevDay}`;
 }
 
