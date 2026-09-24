@@ -118,6 +118,9 @@ export async function GET(request: Request) {
       const userJoinDate = user.createdAt.toISOString().slice(0, 10);
       return userIdsWithRecords.has(user.id) && userJoinDate <= dateFilter;
     });
+  } else {
+    // If no date filter, show all users with their today's analytics
+    filteredUsers = users;
   }
 
   const rows = await Promise.all(

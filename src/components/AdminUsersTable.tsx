@@ -48,12 +48,13 @@ export default function AdminUsersTable() {
   const [users, setUsers] = useState<AdminUser[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [dateFilter, setDateFilter] = useState(todayISO());
+  const [dateFilter, setDateFilter] = useState("");
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleViewDetail = (userId: string) => {
-    router.push(`/admin/detail?userId=${userId}&date=${dateFilter}`);
+    const dateParam = dateFilter || todayISO();
+    router.push(`/admin/detail?userId=${userId}&date=${dateParam}`);
   };
 
   const handleView40Day = (userId: string) => {
@@ -104,12 +105,12 @@ export default function AdminUsersTable() {
           <button
             onClick={() => {
               setSearchQuery("");
-              setDateFilter(todayISO());
+              setDateFilter("");
               setError(null);
             }}
-            className="rounded-lg bg-primary-500 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600"
+            className="rounded-lg border border-border bg-surface-muted px-4 py-2 text-sm font-semibold text-foreground hover:border-primary-300"
           >
-            Reset to Today
+            Clear Filters
           </button>
         </div>
       </div>
@@ -117,7 +118,14 @@ export default function AdminUsersTable() {
   }
 
   const totalUsers = users?.length || 0;
-  const activeUsers = users?.filter((u) => u.analytics.todayLoggedCount > 0).length || 0;
+  const activeUsers = users?.filter((u) => {
+    // If date filter is set, check if user has records for that date
+    if (dateFilter) {
+      return u.analytics.todayLoggedCount > 0;
+    }
+    // If no date filter, check if user has any records for today
+    return u.analytics.todayLoggedCount > 0;
+  }).length || 0;
 
   return (
     <div className="space-y-3 sm:space-y-4">
@@ -151,7 +159,7 @@ export default function AdminUsersTable() {
             <button
               onClick={() => {
                 setSearchQuery("");
-                setDateFilter(todayISO());
+                setDateFilter("");
               }}
               className="rounded-lg bg-primary-500 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-600 transition-colors sm:rounded-xl sm:px-4 sm:py-2.5"
             >
@@ -180,9 +188,11 @@ export default function AdminUsersTable() {
       {users && users.length === 0 && (
         <div className="rounded-2xl border border-border bg-surface p-12 text-center">
           <div className="mb-4 text-4xl">📅</div>
-          <p className="text-lg font-medium text-foreground">No records found for this date</p>
+          <p className="text-lg font-medium text-foreground">No records found</p>
           <p className="mt-2 text-sm text-foreground/50">
-            {dateFilter ? `No users have records for ${formatDate(dateFilter)}` : "Try selecting a different date"}
+            {dateFilter
+              ? `No users have records for ${formatDate(dateFilter)}`
+              : "Select a date to view user records for that day"}
           </p>
         </div>
       )}
@@ -212,7 +222,9 @@ export default function AdminUsersTable() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </div>
-                <p className="text-[10px] font-medium text-foreground/60 sm:text-[11px]">Active Today</p>
+                <p className="text-[10px] font-medium text-foreground/60 sm:text-[11px]">
+                  {dateFilter ? `Active on ${formatDate(dateFilter)}` : "Active Today"}
+                </p>
                 <p className="text-lg font-bold text-foreground sm:text-xl">{activeUsers}</p>
               </div>
             </div>

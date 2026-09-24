@@ -45,11 +45,6 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "date query required (YYYY-MM-DD)" }, { status: 400 });
   }
 
-  // Validate date is not in the future
-  if (date > todayISO()) {
-    return NextResponse.json({ error: "Cannot view future dates" }, { status: 400 });
-  }
-
   // Validate date is not before app launch
   if (date < APP_LAUNCH_DATE) {
     return NextResponse.json({ error: `Records before ${APP_LAUNCH_DATE} are not available` }, { status: 400 });

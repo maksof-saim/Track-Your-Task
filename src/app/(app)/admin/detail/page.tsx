@@ -70,12 +70,6 @@ export default function AdminUserDetailPage() {
   }, [userId, date]);
 
   function handleDateChange(newDate: string) {
-    if (newDate > todayISO()) {
-      toast.error("Cannot select future date", {
-        description: "Please select today or a past date.",
-      });
-      return;
-    }
     setDate(newDate);
   }
 
@@ -84,12 +78,7 @@ export default function AdminUserDetailPage() {
   }
 
   function goToNextDay() {
-    const next = getNextDay(date);
-    if (next > todayISO()) {
-      toast.error("Cannot view future dates");
-      return;
-    }
-    setDate(next);
+    setDate(getNextDay(date));
   }
 
   function goToToday() {
@@ -200,8 +189,7 @@ export default function AdminUserDetailPage() {
               </button>
               <button
                 onClick={goToNextDay}
-                disabled={getNextDay(date) > todayISO()}
-                className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300 disabled:opacity-50"
+                className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300"
               >
                 Next
               </button>
@@ -225,9 +213,12 @@ export default function AdminUserDetailPage() {
 
         <div className="rounded-2xl border border-border bg-surface p-12 text-center">
           <div className="mb-4 text-4xl">📅</div>
-          <p className="text-lg font-medium text-foreground">No records found for this date</p>
+          <p className="text-lg font-medium text-foreground">No records found</p>
           <p className="mt-2 text-sm text-foreground/50">
             {detail.user.name} does not have any records for {formatDisplayDate(date)}
+          </p>
+          <p className="mt-1 text-xs text-foreground/40">
+            Select a different date to view their records
           </p>
         </div>
       </div>
@@ -272,6 +263,12 @@ export default function AdminUserDetailPage() {
           </div>
           <div className="flex items-center gap-2">
             <button
+              onClick={() => router.push(`/admin/40day-record?userId=${userId}`)}
+              className="rounded-lg bg-primary-500 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-600"
+            >
+              40-Day Record
+            </button>
+            <button
               onClick={goToPreviousDay}
               className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300"
             >
@@ -285,8 +282,7 @@ export default function AdminUserDetailPage() {
             </button>
             <button
               onClick={goToNextDay}
-              disabled={getNextDay(date) > todayISO()}
-              className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300 disabled:opacity-50"
+              className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300"
             >
               Next
             </button>
