@@ -156,9 +156,9 @@ export default function Admin40DayRecordPage() {
           <p className="text-xs text-foreground/40">{data.stats.jamaatCount} Jamaat</p>
         </div>
         <div className="rounded-xl border border-border bg-surface p-4">
-          <p className="text-xs text-foreground/60">Total Zikr</p>
+          <p className="text-xs text-foreground/60">Total Zikr (Count)</p>
           <p className="text-2xl font-bold text-foreground">{data.stats.totalZikr}</p>
-          <p className="text-xs text-foreground/40">count</p>
+          <p className="text-xs text-foreground/40">Kasrat se not counted</p>
         </div>
         <div className="rounded-xl border border-border bg-surface p-4">
           <p className="text-xs text-foreground/60">Tilawat / Hifazat</p>
@@ -218,7 +218,7 @@ export default function Admin40DayRecordPage() {
                         <div className="flex flex-wrap gap-2">
                           {record.zikr.map((z, idx) => (
                             <span key={idx} className="rounded-lg border border-border bg-surface-muted px-2 py-1 text-xs">
-                              {z.name}: {z.count}
+                              {z.name}: {z.mode === 'KASRAT' ? 'Kasrat se' : z.count}
                             </span>
                           ))}
                         </div>

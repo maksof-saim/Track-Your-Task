@@ -174,7 +174,8 @@ export async function GET(request: Request) {
         else if (status === "QAZA") qazaCount++;
       }
     }
-    totalZikr += record.zikr.reduce((sum: number, z: any) => sum + z.count, 0);
+    // Only count zikr if mode is COUNT, not KASRAT
+    totalZikr += record.zikr.reduce((sum: number, z: any) => sum + (z.mode === 'COUNT' ? z.count : 0), 0);
     totalTilawat += record.tilawat.filter((t: any) => t.done).length;
     totalHifazat += record.hifazat.filter((h: any) => h.done).length;
   }
