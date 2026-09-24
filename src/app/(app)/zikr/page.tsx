@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { todayISO, formatDisplayDate } from "@/lib/prayerMeta";
 import { AZKAAR_TARGET_ITEMS } from "@/lib/checklistMeta";
-import { isFutureDate } from "@/lib/dateUtils";
+import { isFutureDate, getPreviousDay, getNextDay } from "@/lib/dateUtils";
 
 type ZikrMode = "COUNT" | "KASRAT";
 type ZikrEntry = { name: string; count: number; mode: ZikrMode };
@@ -18,8 +18,7 @@ const initialDraft = (entry?: ZikrEntry): Draft => ({
 
 export default function ZikrPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-  const [date, setDate] = useState(searchParams.get("date") || todayISO());
+  const [date, setDate] = useState(todayISO());
   const [entries, setEntries] = useState<ZikrEntry[]>([]);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [loading, setLoading] = useState(true);
@@ -121,7 +120,7 @@ export default function ZikrPage() {
 
   return (
     <div className="mx-auto w-full max-w-3xl">
-      <div className="mb-5 flex flex-col gap-3 sm:mb-7">
+      <div className="mb-6 flex flex-col gap-4 sm:mb-8">
         <div>
           <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary-500">
             Daily ibadah
@@ -130,14 +129,53 @@ export default function ZikrPage() {
           <p className="mt-1 text-sm text-foreground/60">Record your daily zikr</p>
         </div>
 
-        <div className="flex items-center gap-2">
-          <input
-            type="date"
-            value={date}
-            onChange={(e) => handleDateChange(e.target.value)}
-            className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 sm:rounded-xl sm:px-4 sm:py-2.5"
-          />
-          <span className="text-xs text-foreground/60">{formatDisplayDate(date)}</span>
+        <div className="rounded-xl border border-border bg-surface-muted/50 p-4 sm:p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-500/10">
+                <svg className="h-5 w-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <div>
+                <p className="text-xs font-medium text-foreground/60">Selected Date</p>
+                <p className="text-sm font-semibold text-foreground">{formatDisplayDate(date)}</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => handleDateChange(getPreviousDay(date))}
+                className="rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-primary-300 transition-colors"
+              >
+                ← Previous
+              </button>
+              <button
+                onClick={() => handleDateChange(todayISO())}
+                className="rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-primary-300 transition-colors"
+              >
+                Today
+              </button>
+              <button
+                onClick={() => handleDateChange(getNextDay(date))}
+                disabled={isFutureDate(getNextDay(date))}
+                className="rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-primary-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Next →
+              </button>
+            </div>
+          </div>
+          <div className="mt-3 flex items-center gap-2">
+            <label htmlFor="zikr-date" className="text-xs font-medium text-foreground/60">
+              Or select specific date:
+            </label>
+            <input
+              id="zikr-date"
+              type="date"
+              value={date}
+              onChange={(e) => handleDateChange(e.target.value)}
+              className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+            />
+          </div>
         </div>
       </div>
 

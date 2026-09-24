@@ -30,12 +30,12 @@ export function getDateDaysAgo(days: number): string {
 }
 
 /**
- * Format ISO date string to display format (e.g., "Mon, 31 Aug 2026")
+ * Format ISO date string to display format with day name (e.g., "Monday, 31 Aug 2026")
  */
 export function formatDisplayDate(iso: string): string {
   const [year, month, day] = iso.split('-').map(Number);
   return new Date(year, month - 1, day).toLocaleDateString('en-GB', {
-    weekday: 'short',
+    weekday: 'long',
     day: '2-digit',
     month: 'short',
     year: 'numeric',
