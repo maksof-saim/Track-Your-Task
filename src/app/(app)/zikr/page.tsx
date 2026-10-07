@@ -57,62 +57,68 @@ export default function ZikrPage() {
     setDrafts((current) => ({ ...current, [name]: { ...current[name], ...changes } }));
   }
 
-  async function saveEntry(name: string) {
-    const draft = drafts[name] ?? initialDraft();
-    const count = Number(draft.count);
+  async function saveAll() {
+    const validEntries = AZKAAR_TARGET_ITEMS.map(({ name }) => {
+      const draft = drafts[name] ?? initialDraft();
+      const count = Number(draft.count);
 
-    if (draft.mode === "COUNT") {
-      if (draft.count === "" || draft.count.trim() === "") {
-        toast.error("Please enter a count", {
-          description: "Enter the number of times you performed this zikr.",
-        });
-        return;
+      if (draft.mode === "COUNT") {
+        if (draft.count === "" || draft.count.trim() === "") {
+          return null;
+        }
+        if (!Number.isInteger(count) || count < 0) {
+          return null;
+        }
+        if (count === 0) {
+          return null;
+        }
+        if (count > 1000000) {
+          return null;
+        }
+        return { name, mode: draft.mode, count };
       }
-      if (!Number.isInteger(count) || count < 0) {
-        toast.error("Invalid count", {
-          description: "Please enter a valid positive number.",
-        });
-        return;
+
+      if (draft.mode === "KASRAT") {
+        return { name, mode: "KASRAT", count: 0 };
       }
-      if (count === 0) {
-        toast.error("Count cannot be zero", {
-          description: "Please enter a number greater than 0 to save your zikr.",
-        });
-        return;
-      }
-      if (count > 1000000) {
-        toast.error("Count too large", {
-          description: "Count must be less than 1,000,000.",
-        });
-        return;
-      }
+
+      return null;
+    }).filter(Boolean) as { name: string; mode: ZikrMode; count: number }[];
+
+    if (validEntries.length === 0) {
+      toast.error("No zikr to save", {
+        description: "Please enter at least one zikr count.",
+      });
+      return;
     }
 
-    setPending(name);
-    const response = await fetch("/api/zikr", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        date,
-        name,
-        mode: draft.mode,
-        count: draft.mode === "COUNT" ? count : 0,
-      }),
-    });
+    setPending("all");
 
-    if (response.ok) {
-      const nextEntry = await response.json();
-      setEntries((current) => [
-        ...current.filter((entry) => entry.name !== name),
-        nextEntry,
-      ]);
-      toast.success("Zikr saved successfully!", {
-        description: `${name} has been recorded.`,
+    try {
+      const response = await fetch("/api/zikr", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          date,
+          entries: validEntries,
+        }),
       });
-    } else {
-      const data = await response.json().catch(() => ({}));
+
+      if (response.ok) {
+        const data = await response.json();
+        setEntries(data.entries || []);
+        toast.success("All zikr saved successfully!", {
+          description: `${validEntries.length} zikr recorded.`,
+        });
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        toast.error("Failed to save zikr", {
+          description: errorData.error || "Please try again.",
+        });
+      }
+    } catch (error) {
       toast.error("Failed to save zikr", {
-        description: data.error || "Please try again.",
+        description: "Please try again.",
       });
     }
     setPending(null);
@@ -185,13 +191,12 @@ export default function ZikrPage() {
           const draft = drafts[name] ?? initialDraft(entry);
           const count = Number(draft.count);
           const hasValidCount = draft.mode === "KASRAT" || (Number.isInteger(count) && count > 0);
-          const isPending = pending === name;
 
           return (
-            <section key={name} className="rounded-2xl border border-border bg-surface p-4 shadow-sm sm:p-5">
+            <section key={name} className="rounded-xl border border-border bg-surface p-4 shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0">
-                  <h2 className="font-semibold leading-6 text-foreground">{name}</h2>
+                  <h2 className="font-semibold text-base text-foreground">{name}</h2>
                   <p className="mt-1 text-xs text-foreground/55">
                     {entry?.mode === "KASRAT" ? "Kasrat se saved" : `Today's count: ${entry?.count ?? 0}`}
                   </p>
@@ -199,7 +204,7 @@ export default function ZikrPage() {
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <label className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors ${draft.mode === "COUNT" ? "border-primary-400 bg-primary-50" : "border-border hover:border-primary-100"}`}>
+                <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${draft.mode === "COUNT" ? "border-primary-400 bg-primary-50" : "border-border hover:border-primary-100"}`}>
                   <input
                     type="radio"
                     name={`mode-${name}`}
@@ -208,7 +213,7 @@ export default function ZikrPage() {
                     className="h-4 w-4 accent-primary-500"
                   />
                   <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-foreground">Apna count</span>
+                    <span className="block text-sm font-medium text-foreground">Apna count</span>
                     <span className="block text-xs text-foreground/55">How many times?</span>
                   </span>
                   <input
@@ -223,39 +228,41 @@ export default function ZikrPage() {
                   />
                 </label>
 
-                <label className={`flex cursor-pointer items-center gap-3 rounded-xl border p-3 transition-colors ${draft.mode === "KASRAT" ? "border-gold-400 bg-gold-100" : "border-border hover:border-gold-400/60"}`}>
+                <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${draft.mode === "KASRAT" ? "border-primary-400 bg-primary-50" : "border-border hover:border-primary-100"}`}>
                   <input
                     type="radio"
                     name={`mode-${name}`}
                     checked={draft.mode === "KASRAT"}
                     onChange={() => updateDraft(name, { mode: "KASRAT" })}
-                    className="h-4 w-4 accent-gold-500"
+                    className="h-4 w-4 accent-primary-500"
                   />
                   <span>
-                    <span className="block text-sm font-semibold text-foreground">Kasrat se</span>
+                    <span className="block text-sm font-medium text-foreground">Kasrat se</span>
                     <span className="block text-xs text-foreground/55">More than 300</span>
                   </span>
                 </label>
               </div>
-
-              <button
-                type="button"
-                onClick={() => saveEntry(name)}
-                disabled={isPending || !hasValidCount}
-                className="mt-4 flex w-full items-center justify-center rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isPending ? (
-                  <>
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                    Saving...
-                  </>
-                ) : (
-                  "Save Zikr"
-                )}
-              </button>
             </section>
           );
         })}
+
+        <div className="sticky bottom-0 pt-4 bg-surface/95 backdrop-blur">
+          <button
+            type="button"
+            onClick={saveAll}
+            disabled={pending === "all"}
+            className="flex w-full items-center justify-center rounded-xl bg-primary-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
+          >
+            {pending === "all" ? (
+              <>
+                <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+                Saving...
+              </>
+            ) : (
+              "Save All Zikr"
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

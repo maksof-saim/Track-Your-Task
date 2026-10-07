@@ -70,7 +70,58 @@ export async function POST(request: Request) {
     return NextResponse.json({ name: log.name, count: log.count, mode: log.mode });
   }
 
-  // Handle standard zikr entries
+  // Handle bulk zikr entries
+  if (body.entries && Array.isArray(body.entries)) {
+    const { date, entries } = body;
+
+    // Validate date is not in the future
+    if (date > todayISO()) {
+      return NextResponse.json(
+        { error: "Cannot save records for future dates" },
+        { status: 400 },
+      );
+    }
+
+    const dateValue = new Date(`${date}T00:00:00.000Z`);
+
+    // Use a transaction to save all entries atomically
+    const savedEntries = await prisma.$transaction(
+      entries.map((entry: { name: string; mode: string; count: number }) =>
+        prisma.zikrLog.upsert({
+          where: {
+            userId_date_name: {
+              userId: session.user.id,
+              date: dateValue,
+              name: entry.name,
+            },
+          },
+          update: {
+            count: entry.mode === "COUNT" ? entry.count : 0,
+            mode: entry.mode as "COUNT" | "KASRAT",
+          },
+          create: {
+            userId: session.user.id,
+            date: dateValue,
+            name: entry.name,
+            count: entry.mode === "COUNT" ? entry.count : 0,
+            mode: entry.mode as "COUNT" | "KASRAT",
+          },
+        })
+      )
+    );
+
+    // Fetch all entries for the date to return
+    const logs = await prisma.zikrLog.findMany({
+      where: { userId: session.user.id, date: dateValue },
+      orderBy: { updatedAt: "desc" },
+    });
+
+    return NextResponse.json({
+      entries: logs.map((l) => ({ name: l.name, count: l.count, mode: l.mode })),
+    });
+  }
+
+  // Handle single standard zikr entry (legacy support)
   const parsed = zikrLogSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(
