@@ -130,3 +130,153 @@ export function getDateRange(startIso: string, endIso: string): string[] {
   }
   return dates;
 }
+
+/**
+ * Check if a date is Saturday (day 6)
+ */
+export function isSaturday(iso: string): boolean {
+  const [year, month, day] = iso.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.getDay() === 6;
+}
+
+/**
+ * Check if a date is Sunday (day 0)
+ */
+export function isSunday(iso: string): boolean {
+  const [year, month, day] = iso.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  return date.getDay() === 0;
+}
+
+/**
+ * Check if a date is a class day (Saturday or Sunday)
+ */
+export function isClassDay(iso: string): boolean {
+  return isSaturday(iso) || isSunday(iso);
+}
+
+/**
+ * Get the next Saturday from the given date
+ */
+export function getNextSaturday(iso: string): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const currentDay = date.getDay();
+  const daysUntilSaturday = (6 - currentDay + 7) % 7 || 7;
+  date.setDate(date.getDate() + daysUntilSaturday);
+  const nextYear = date.getFullYear();
+  const nextMonth = String(date.getMonth() + 1).padStart(2, '0');
+  const nextDay = String(date.getDate()).padStart(2, '0');
+  return `${nextYear}-${nextMonth}-${nextDay}`;
+}
+
+/**
+ * Get the next Sunday from the given date
+ */
+export function getNextSunday(iso: string): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const currentDay = date.getDay();
+  const daysUntilSunday = (7 - currentDay) % 7 || 7;
+  date.setDate(date.getDate() + daysUntilSunday);
+  const nextYear = date.getFullYear();
+  const nextMonth = String(date.getMonth() + 1).padStart(2, '0');
+  const nextDay = String(date.getDate()).padStart(2, '0');
+  return `${nextYear}-${nextMonth}-${nextDay}`;
+}
+
+/**
+ * Get the previous Saturday from the given date
+ */
+export function getPreviousSaturday(iso: string): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const currentDay = date.getDay();
+  const daysSinceSaturday = (currentDay - 6 + 7) % 7 || 7;
+  date.setDate(date.getDate() - daysSinceSaturday);
+  const prevYear = date.getFullYear();
+  const prevMonth = String(date.getMonth() + 1).padStart(2, '0');
+  const prevDay = String(date.getDate()).padStart(2, '0');
+  return `${prevYear}-${prevMonth}-${prevDay}`;
+}
+
+/**
+ * Get the previous Sunday from the given date
+ */
+export function getPreviousSunday(iso: string): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const currentDay = date.getDay();
+  const daysSinceSunday = currentDay || 7;
+  date.setDate(date.getDate() - daysSinceSunday);
+  const prevYear = date.getFullYear();
+  const prevMonth = String(date.getMonth() + 1).padStart(2, '0');
+  const prevDay = String(date.getDate()).padStart(2, '0');
+  return `${prevYear}-${prevMonth}-${prevDay}`;
+}
+
+/**
+ * Get the next class day (Saturday or Sunday) from the given date
+ */
+export function getNextClassDay(iso: string): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const currentDay = date.getDay();
+
+  // If it's Saturday (6), next is Sunday (0)
+  if (currentDay === 6) {
+    date.setDate(date.getDate() + 1);
+  }
+  // If it's Sunday (0), next is next Saturday (6)
+  else if (currentDay === 0) {
+    date.setDate(date.getDate() + 6);
+  }
+  // If it's Monday-Friday (1-5), next is Saturday (6)
+  else {
+    date.setDate(date.getDate() + (6 - currentDay));
+  }
+
+  const nextYear = date.getFullYear();
+  const nextMonth = String(date.getMonth() + 1).padStart(2, '0');
+  const nextDay = String(date.getDate()).padStart(2, '0');
+  return `${nextYear}-${nextMonth}-${nextDay}`;
+}
+
+/**
+ * Get the previous class day (Saturday or Sunday) from the given date
+ */
+export function getPreviousClassDay(iso: string): string {
+  const [year, month, day] = iso.split('-').map(Number);
+  const date = new Date(year, month - 1, day);
+  const currentDay = date.getDay();
+
+  // If it's Saturday (6), previous is Sunday (0) of previous week
+  if (currentDay === 6) {
+    date.setDate(date.getDate() - 6);
+  }
+  // If it's Sunday (0), previous is Saturday (6)
+  else if (currentDay === 0) {
+    date.setDate(date.getDate() - 1);
+  }
+  // If it's Monday-Friday (1-5), previous is Sunday (0) of current week
+  else {
+    date.setDate(date.getDate() - currentDay);
+  }
+
+  const prevYear = date.getFullYear();
+  const prevMonth = String(date.getMonth() + 1).padStart(2, '0');
+  const prevDay = String(date.getDate()).padStart(2, '0');
+  return `${prevYear}-${prevMonth}-${prevDay}`;
+}
+
+/**
+ * Get the nearest class day (Saturday or Sunday) from the given date
+ * If the date is already a class day, return it
+ */
+export function getNearestClassDay(iso: string): string {
+  if (isClassDay(iso)) {
+    return iso;
+  }
+  return getNextClassDay(iso);
+}

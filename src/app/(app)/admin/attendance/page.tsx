@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { todayISO } from "@/lib/prayerMeta";
-import { getPreviousDay, getNextDay, formatDisplayDate } from "@/lib/dateUtils";
+import { getPreviousClassDay, getNextClassDay, getNearestClassDay, formatDisplayDate, isClassDay } from "@/lib/dateUtils";
 
 type AttendanceStatus = "PRESENT" | "ABSENT" | null;
 
@@ -19,7 +19,7 @@ type UserWithAttendance = {
 
 export default function AttendancePage() {
   const router = useRouter();
-  const [date, setDate] = useState(todayISO());
+  const [date, setDate] = useState(getNearestClassDay(todayISO()));
   const [users, setUsers] = useState<UserWithAttendance[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -30,15 +30,15 @@ export default function AttendancePage() {
   }
 
   function goToPreviousDay() {
-    setDate(getPreviousDay(date));
+    setDate(getPreviousClassDay(date));
   }
 
   function goToNextDay() {
-    setDate(getNextDay(date));
+    setDate(getNextClassDay(date));
   }
 
   function goToToday() {
-    setDate(todayISO());
+    setDate(getNearestClassDay(todayISO()));
   }
 
   function toggleAttendance(userId: string) {
@@ -146,104 +146,104 @@ export default function AttendancePage() {
   const absentCount = users?.filter((u) => u.attendance === "ABSENT").length || 0;
 
   return (
-    <div className="mx-auto max-w-4xl">
+    <div className="mx-auto max-w-4xl px-2 sm:px-4">
       {/* Navigation Tabs */}
-      <div className="mb-6 flex gap-2 border-b border-border">
+      <div className="mb-4 flex gap-2 border-b border-border overflow-x-auto">
         <a
           href="/admin"
-          className="border-b-2 border-transparent px-4 py-2 text-sm font-medium text-foreground/60 hover:text-foreground hover:border-border transition-colors"
+          className="shrink-0 border-b-2 border-transparent px-3 py-2 text-xs sm:text-sm font-medium text-foreground/60 hover:text-foreground hover:border-border transition-colors"
         >
           User Management
         </a>
         <a
           href="/admin/attendance"
-          className="border-b-2 border-primary-500 px-4 py-2 text-sm font-medium text-foreground"
+          className="shrink-0 border-b-2 border-primary-500 px-3 py-2 text-xs sm:text-sm font-medium text-foreground"
         >
           Attendance
         </a>
       </div>
 
-      <div className="mb-6 flex flex-col gap-4 sm:mb-8">
+      <div className="mb-4 sm:mb-6 flex flex-col gap-3 sm:gap-4">
         <div>
-          <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary-500">
+          <p className="mb-1 text-[10px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-primary-500">
             Admin Panel
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Attendance</h1>
-          <p className="mt-1 text-sm text-foreground/60">Mark attendance for users</p>
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Attendance</h1>
+          <p className="mt-1 text-xs sm:text-sm text-foreground/60">Mark attendance for users (Saturday & Sunday only)</p>
         </div>
 
-        <div className="rounded-xl border border-border bg-surface-muted/50 p-4 sm:p-5">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary-500/10">
-                <svg className="h-5 w-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="rounded-xl border border-border bg-surface-muted/50 p-3 sm:p-4">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-2 sm:gap-3">
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 items-center justify-center rounded-lg bg-primary-500/10 shrink-0">
+                <svg className="h-4 w-4 sm:h-5 sm:w-5 text-primary-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
               </div>
-              <div>
-                <p className="text-xs font-medium text-foreground/60">Selected Date</p>
-                <p className="text-sm font-semibold text-foreground">{formatDisplayDate(date)}</p>
+              <div className="min-w-0">
+                <p className="text-[10px] sm:text-xs font-medium text-foreground/60">Selected Date</p>
+                <p className="text-xs sm:text-sm font-semibold text-foreground truncate">{formatDisplayDate(date)}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <button
                 onClick={goToPreviousDay}
-                className="rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-primary-300 transition-colors"
+                className="flex-1 shrink-0 rounded-lg border border-border bg-surface px-3 py-2 text-xs sm:text-sm hover:border-primary-300 transition-colors"
               >
                 ← Previous
               </button>
               <button
                 onClick={goToToday}
-                className="rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-primary-300 transition-colors"
+                className="flex-1 shrink-0 rounded-lg border border-border bg-surface px-3 py-2 text-xs sm:text-sm hover:border-primary-300 transition-colors"
               >
                 Today
               </button>
               <button
                 onClick={goToNextDay}
-                className="rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-primary-300 transition-colors"
+                className="flex-1 shrink-0 rounded-lg border border-border bg-surface px-3 py-2 text-xs sm:text-sm hover:border-primary-300 transition-colors"
               >
                 Next →
               </button>
             </div>
-          </div>
-          <div className="mt-3 flex items-center gap-2">
-            <label htmlFor="attendance-date" className="text-xs font-medium text-foreground/60">
-              Or select specific date:
-            </label>
-            <input
-              id="attendance-date"
-              type="date"
-              value={date}
-              onChange={(e) => handleDateChange(e.target.value)}
-              className="rounded-lg border border-border bg-surface px-3 py-1.5 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
-            />
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+              <label htmlFor="attendance-date" className="text-[10px] sm:text-xs font-medium text-foreground/60 shrink-0">
+                Select date:
+              </label>
+              <input
+                id="attendance-date"
+                type="date"
+                value={date}
+                onChange={(e) => handleDateChange(e.target.value)}
+                className="flex-1 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs sm:text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+              />
+            </div>
           </div>
         </div>
       </div>
 
       {/* Stats Cards */}
-      <div className="mb-6 grid grid-cols-3 gap-3 sm:gap-4">
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <p className="text-xs text-foreground/60">Total Users</p>
-          <p className="text-2xl font-bold text-foreground">{users?.length || 0}</p>
+      <div className="mb-4 sm:mb-6 grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="rounded-xl border border-border bg-surface p-3 sm:p-4">
+          <p className="text-[10px] sm:text-xs text-foreground/60">Total Users</p>
+          <p className="text-xl sm:text-2xl font-bold text-foreground">{users?.length || 0}</p>
         </div>
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <p className="text-xs text-foreground/60">Present</p>
-          <p className="text-2xl font-bold text-green-600">{presentCount}</p>
+        <div className="rounded-xl border border-border bg-surface p-3 sm:p-4">
+          <p className="text-[10px] sm:text-xs text-foreground/60">Present</p>
+          <p className="text-xl sm:text-2xl font-bold text-green-600">{presentCount}</p>
         </div>
-        <div className="rounded-xl border border-border bg-surface p-4">
-          <p className="text-xs text-foreground/60">Absent</p>
-          <p className="text-2xl font-bold text-red-600">{absentCount}</p>
+        <div className="rounded-xl border border-border bg-surface p-3 sm:p-4">
+          <p className="text-[10px] sm:text-xs text-foreground/60">Absent</p>
+          <p className="text-xl sm:text-2xl font-bold text-red-600">{absentCount}</p>
         </div>
       </div>
 
       {/* User List */}
-      <div className={`space-y-3 ${loading ? "opacity-50" : ""}`}>
+      <div className={`space-y-2 sm:space-y-3 ${loading ? "opacity-50" : ""}`}>
         {users && users.length === 0 && (
-          <div className="rounded-2xl border border-border bg-surface p-12 text-center">
-            <div className="mb-4 text-4xl">📅</div>
-            <p className="text-lg font-medium text-foreground">No users found</p>
-            <p className="mt-2 text-sm text-foreground/50">
+          <div className="rounded-2xl border border-border bg-surface p-6 sm:p-12 text-center">
+            <div className="mb-4 text-3xl sm:text-4xl">📅</div>
+            <p className="text-base sm:text-lg font-medium text-foreground">No users found</p>
+            <p className="mt-2 text-xs sm:text-sm text-foreground/50">
               No users have joined by this date
             </p>
           </div>
@@ -254,24 +254,22 @@ export default function AttendancePage() {
             {users.map((user) => (
               <div
                 key={user.id}
-                className="flex items-center justify-between gap-4 rounded-xl border border-border bg-surface p-4 sm:gap-6"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-xl border border-border bg-surface p-3 sm:p-4"
               >
-                <div className="flex-1">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-500/10 text-primary-600 font-semibold text-sm">
-                      {user.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <p className="font-medium text-foreground">{user.name}</p>
-                      <p className="text-xs text-foreground/50">{user.email}</p>
-                    </div>
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-primary-500/10 text-primary-600 font-semibold text-xs sm:text-sm">
+                    {user.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0">
+                    <p className="text-sm sm:text-base font-medium text-foreground truncate">{user.name}</p>
+                    <p className="text-[10px] sm:text-xs text-foreground/50 truncate">{user.email}</p>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 w-full sm:w-auto">
                   <button
                     onClick={() => toggleAttendance(user.id)}
-                    className={`rounded-lg px-4 py-2 text-sm font-semibold transition-colors ${user.attendance === "PRESENT"
+                    className={`flex-1 sm:flex-none rounded-lg px-3 py-2 text-xs sm:text-sm font-semibold transition-colors ${user.attendance === "PRESENT"
                       ? "bg-green-500 text-white hover:bg-green-600"
                       : user.attendance === "ABSENT"
                         ? "bg-red-500 text-white hover:bg-red-600"
@@ -286,7 +284,7 @@ export default function AttendancePage() {
                   </button>
                   <button
                     onClick={() => fetchUserStats(user.id)}
-                    className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300 transition-colors"
+                    className="shrink-0 rounded-lg border border-border bg-surface-muted px-2 py-2 text-xs sm:px-3 sm:py-2 hover:border-primary-300 transition-colors"
                     title="View Statistics"
                   >
                     Stats
@@ -295,11 +293,11 @@ export default function AttendancePage() {
               </div>
             ))}
 
-            <div className="mt-6">
+            <div className="mt-4 sm:mt-6">
               <button
                 onClick={handleSave}
                 disabled={saving || loading || markedCount === 0}
-                className="flex items-center justify-center w-full rounded-xl bg-primary-500 px-5 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:opacity-60"
+                className="flex items-center justify-center w-full rounded-xl bg-primary-500 px-4 py-3 text-xs sm:text-sm sm:px-5 sm:py-3 font-semibold text-white transition-colors hover:bg-primary-600 disabled:opacity-60"
               >
                 {saving ? (
                   <>
@@ -317,10 +315,10 @@ export default function AttendancePage() {
 
       {/* Stats Modal */}
       {selectedStats && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-4 sm:p-6">
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-foreground">
+              <h2 className="text-base sm:text-lg font-semibold text-foreground">
                 {selectedStats.user.name} - Statistics
               </h2>
               <button
@@ -332,22 +330,22 @@ export default function AttendancePage() {
                 </svg>
               </button>
             </div>
-            <div className="space-y-4">
-              <div className="flex justify-between rounded-lg border border-border bg-surface-muted p-4">
-                <span className="text-sm text-foreground/60">Total Present</span>
-                <span className="font-semibold text-green-600">{selectedStats.stats.present}</span>
+            <div className="space-y-3 sm:space-y-4">
+              <div className="flex justify-between rounded-lg border border-border bg-surface-muted p-3 sm:p-4">
+                <span className="text-xs sm:text-sm text-foreground/60">Total Present</span>
+                <span className="font-semibold text-green-600 text-sm sm:text-base">{selectedStats.stats.present}</span>
               </div>
-              <div className="flex justify-between rounded-lg border border-border bg-surface-muted p-4">
-                <span className="text-sm text-foreground/60">Total Absent</span>
-                <span className="font-semibold text-red-600">{selectedStats.stats.absent}</span>
+              <div className="flex justify-between rounded-lg border border-border bg-surface-muted p-3 sm:p-4">
+                <span className="text-xs sm:text-sm text-foreground/60">Total Absent</span>
+                <span className="font-semibold text-red-600 text-sm sm:text-base">{selectedStats.stats.absent}</span>
               </div>
-              <div className="flex justify-between rounded-lg border border-border bg-surface-muted p-4">
-                <span className="text-sm text-foreground/60">Total Marked</span>
-                <span className="font-semibold text-foreground">{selectedStats.stats.totalMarked}</span>
+              <div className="flex justify-between rounded-lg border border-border bg-surface-muted p-3 sm:p-4">
+                <span className="text-xs sm:text-sm text-foreground/60">Total Marked</span>
+                <span className="font-semibold text-foreground text-sm sm:text-base">{selectedStats.stats.totalMarked}</span>
               </div>
-              <div className="flex justify-between rounded-lg border border-border bg-surface-muted p-4">
-                <span className="text-sm text-foreground/60">Attendance Rate</span>
-                <span className="font-semibold text-primary-600">{selectedStats.stats.attendanceRate}%</span>
+              <div className="flex justify-between rounded-lg border border-border bg-surface-muted p-3 sm:p-4">
+                <span className="text-xs sm:text-sm text-foreground/60">Attendance Rate</span>
+                <span className="font-semibold text-primary-600 text-sm sm:text-base">{selectedStats.stats.attendanceRate}%</span>
               </div>
             </div>
           </div>

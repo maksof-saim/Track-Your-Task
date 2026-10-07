@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { todayISO } from "@/lib/prayerMeta";
+import { isClassDay } from "@/lib/dateUtils";
 
 // Application launch date - records before this date should not be shown
 const APP_LAUNCH_DATE = "2026-08-29";
@@ -40,6 +41,11 @@ export async function GET(request: Request) {
   // Validate date format
   if (dateFilter && !/^\d{4}-\d{2}-\d{2}$/.test(dateFilter)) {
     return NextResponse.json({ error: "Invalid date format. Use YYYY-MM-DD" }, { status: 400 });
+  }
+
+  // Validate date is a class day (Saturday or Sunday)
+  if (dateFilter && !isClassDay(dateFilter)) {
+    return NextResponse.json({ error: "Attendance can only be marked on Saturday or Sunday" }, { status: 400 });
   }
 
   // Validate date is not before app launch
@@ -102,6 +108,11 @@ export async function POST(request: Request) {
   // Validate date format
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
     return NextResponse.json({ error: "Invalid date format. Use YYYY-MM-DD" }, { status: 400 });
+  }
+
+  // Validate date is a class day (Saturday or Sunday)
+  if (!isClassDay(date)) {
+    return NextResponse.json({ error: "Attendance can only be marked on Saturday or Sunday" }, { status: 400 });
   }
 
   // Validate date is not before app launch

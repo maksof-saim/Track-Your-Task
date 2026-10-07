@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { todayISO } from "@/lib/prayerMeta";
+import { isClassDay } from "@/lib/dateUtils";
 
 // Application launch date - records before this date should not be shown
 const APP_LAUNCH_DATE = "2026-08-29";
