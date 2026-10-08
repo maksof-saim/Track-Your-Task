@@ -15,6 +15,14 @@ type UserWithAttendance = {
   role: "USER" | "ADMIN";
   createdAt: string;
   attendance: AttendanceStatus;
+  applicationStatus?: "SUBMITTED" | "NOT_SUBMITTED" | null;
+  applicationNote?: string | null;
+};
+
+type AbsentModalState = {
+  userId: string;
+  userName: string;
+  isOpen: boolean;
 };
 
 export default function AttendancePage() {
@@ -23,7 +31,10 @@ export default function AttendancePage() {
   const [users, setUsers] = useState<UserWithAttendance[] | null>(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [selectedStats, setSelectedStats] = useState<{ user: { name: string }; stats: any } | null>(null);
+  const [selectedStats, setSelectedStats] = useState<{ user: { id: string; name: string }; stats: any } | null>(null);
+  const [absentModal, setAbsentModal] = useState<AbsentModalState>({ userId: "", userName: "", isOpen: false });
+  const [applicationStatus, setApplicationStatus] = useState<"SUBMITTED" | "NOT_SUBMITTED" | null>(null);
+  const [applicationNote, setApplicationNote] = useState("");
 
   function handleDateChange(newDate: string) {
     setDate(newDate);
@@ -41,21 +52,48 @@ export default function AttendancePage() {
     setDate(getNearestClassDay(todayISO()));
   }
 
-  function toggleAttendance(userId: string) {
+  function openAbsentModal(userId: string, userName: string) {
+    const user = users?.find(u => u.id === userId);
+    setApplicationStatus(user?.applicationStatus || null);
+    setApplicationNote(user?.applicationNote || "");
+    setAbsentModal({ userId, userName, isOpen: true });
+  }
+
+  function closeAbsentModal() {
+    setAbsentModal({ userId: "", userName: "", isOpen: false });
+    setApplicationStatus(null);
+    setApplicationNote("");
+  }
+
+  function setAttendanceStatus(userId: string, value: string) {
+    const status: AttendanceStatus = value === "" ? null : (value as "PRESENT" | "ABSENT");
     setUsers((prev) => {
       if (!prev) return prev;
       return prev.map((user) => {
         if (user.id === userId) {
-          const current = user.attendance;
-          let newStatus: AttendanceStatus;
-          if (current === null) newStatus = "PRESENT";
-          else if (current === "PRESENT") newStatus = "ABSENT";
-          else newStatus = null;
-          return { ...user, attendance: newStatus };
+          return { ...user, attendance: status };
         }
         return user;
       });
     });
+  }
+
+  function saveAbsentDetails() {
+    setUsers((prev) => {
+      if (!prev) return prev;
+      return prev.map((user) => {
+        if (user.id === absentModal.userId) {
+          return {
+            ...user,
+            attendance: "ABSENT",
+            applicationStatus,
+            applicationNote,
+          };
+        }
+        return user;
+      });
+    });
+    closeAbsentModal();
   }
 
   async function handleSave() {
@@ -63,7 +101,12 @@ export default function AttendancePage() {
 
     const attendance = users
       .filter((u) => u.attendance !== null)
-      .map((u) => ({ userId: u.id, status: u.attendance }));
+      .map((u) => ({
+        userId: u.id,
+        status: u.attendance,
+        applicationStatus: u.applicationStatus,
+        applicationNote: u.applicationNote,
+      }));
 
     if (attendance.length === 0) {
       toast.error("No attendance marked", {
@@ -84,6 +127,14 @@ export default function AttendancePage() {
         toast.success("Attendance saved successfully!", {
           description: "Attendance records have been updated.",
         });
+
+        // Refresh attendance data
+        await fetchAttendance();
+
+        // If stats modal is open, refresh it
+        if (selectedStats) {
+          await fetchUserStats(selectedStats.user.id);
+        }
       } else {
         const data = await res.json().catch(() => ({}));
         toast.error("Failed to save attendance", {
@@ -124,7 +175,13 @@ export default function AttendancePage() {
       const res = await fetch(`/api/admin/attendance/stats?userId=${userId}`);
       if (res.ok) {
         const data = await res.json();
-        setSelectedStats(data);
+        setSelectedStats({
+          user: {
+            id: data.user.id,
+            name: data.user.name,
+          },
+          stats: data.stats,
+        });
       } else {
         toast.error("Failed to load user statistics", {
           description: "Please try again.",
@@ -267,21 +324,26 @@ export default function AttendancePage() {
                 </div>
 
                 <div className="flex items-center gap-2 w-full sm:w-auto">
-                  <button
-                    onClick={() => toggleAttendance(user.id)}
-                    className={`flex-1 sm:flex-none rounded-lg px-3 py-2 text-xs sm:text-sm font-semibold transition-colors ${user.attendance === "PRESENT"
-                      ? "bg-green-500 text-white hover:bg-green-600"
-                      : user.attendance === "ABSENT"
-                        ? "bg-red-500 text-white hover:bg-red-600"
-                        : "border border-border bg-surface-muted text-foreground hover:border-primary-300"
-                      }`}
+                  <select
+                    value={user.attendance || ""}
+                    onChange={(e) => setAttendanceStatus(user.id, e.target.value)}
+                    className="flex-1 sm:flex-none rounded-lg border border-border bg-surface px-3 py-2 text-xs sm:text-sm font-medium outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
                   >
-                    {user.attendance === "PRESENT"
-                      ? "Present"
-                      : user.attendance === "ABSENT"
-                        ? "Absent"
-                        : "Not Marked"}
-                  </button>
+                    <option value="">Select Status</option>
+                    <option value="PRESENT">Present</option>
+                    <option value="ABSENT">Absent</option>
+                  </select>
+                  {user.attendance === "ABSENT" && (
+                    <button
+                      onClick={() => openAbsentModal(user.id, user.name)}
+                      className="shrink-0 rounded-lg border border-border bg-surface-muted px-2 py-2 text-xs sm:px-3 sm:py-2 hover:border-primary-300 transition-colors"
+                      title="Add Application Details"
+                    >
+                      <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                    </button>
+                  )}
                   <button
                     onClick={() => fetchUserStats(user.id)}
                     className="shrink-0 rounded-lg border border-border bg-surface-muted px-2 py-2 text-xs sm:px-3 sm:py-2 hover:border-primary-300 transition-colors"
@@ -347,6 +409,61 @@ export default function AttendancePage() {
                 <span className="text-xs sm:text-sm text-foreground/60">Attendance Rate</span>
                 <span className="font-semibold text-primary-600 text-sm sm:text-base">{selectedStats.stats.attendanceRate}%</span>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Absent Details Modal */}
+      {absentModal.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-3 sm:p-4">
+          <div className="w-full max-w-md rounded-2xl border border-border bg-surface p-4 sm:p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-base sm:text-lg font-semibold text-foreground">
+                {absentModal.userName} - Absent Details
+              </h2>
+              <button
+                onClick={closeAbsentModal}
+                className="rounded-lg p-2 hover:bg-surface-muted transition-colors"
+              >
+                <svg className="h-5 w-5 text-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-2">
+                  Application Status
+                </label>
+                <select
+                  value={applicationStatus || ""}
+                  onChange={(e) => setApplicationStatus(e.target.value as "SUBMITTED" | "NOT_SUBMITTED" | null)}
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+                >
+                  <option value="">Select Status</option>
+                  <option value="SUBMITTED">Submitted</option>
+                  <option value="NOT_SUBMITTED">Not Submitted</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-foreground mb-2">
+                  Note (Optional)
+                </label>
+                <textarea
+                  value={applicationNote}
+                  onChange={(e) => setApplicationNote(e.target.value)}
+                  placeholder="Add any additional notes..."
+                  rows={3}
+                  className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100 resize-none"
+                />
+              </div>
+              <button
+                onClick={saveAbsentDetails}
+                className="w-full rounded-xl bg-primary-500 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-600"
+              >
+                Save Details
+              </button>
             </div>
           </div>
         </div>

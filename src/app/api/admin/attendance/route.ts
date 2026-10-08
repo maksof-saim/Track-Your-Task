@@ -69,13 +69,20 @@ export async function GET(request: Request) {
   const attendanceLogs = await withRetry(() =>
     prisma.attendanceLog.findMany({
       where: { date: dateValue },
-      select: { userId: true, status: true },
+      select: { userId: true, status: true, applicationStatus: true, applicationNote: true },
     })
   );
 
-  // Create a map of userId -> attendance status
+  // Create a map of userId -> attendance data
   const attendanceMap = new Map(
-    attendanceLogs.map(log => [log.userId, log.status])
+    attendanceLogs.map(log => [
+      log.userId,
+      {
+        status: log.status,
+        applicationStatus: log.applicationStatus,
+        applicationNote: log.applicationNote,
+      }
+    ])
   );
 
   // Filter users who had joined by the selected date
@@ -85,10 +92,15 @@ export async function GET(request: Request) {
   });
 
   // Combine user data with attendance status
-  const rows = filteredUsers.map(user => ({
-    ...user,
-    attendance: attendanceMap.get(user.id) || null, // null means not marked yet
-  }));
+  const rows = filteredUsers.map(user => {
+    const attendanceData = attendanceMap.get(user.id);
+    return {
+      ...user,
+      attendance: attendanceData?.status || null,
+      applicationStatus: attendanceData?.applicationStatus || null,
+      applicationNote: attendanceData?.applicationNote || null,
+    };
+  });
 
   return NextResponse.json({ users: rows, date: filterDate });
 }
@@ -98,29 +110,18 @@ export async function POST(request: Request) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
   if (session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  const body = await request.json();
+  const body = await request.json().catch(() => null);
   const { date, attendance } = body;
 
-  // Validate date format
   if (!date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    return NextResponse.json({ error: "Invalid date format. Use YYYY-MM-DD" }, { status: 400 });
+    return NextResponse.json({ error: "Invalid date format" }, { status: 400 });
   }
 
-  // Validate date is a class day (Saturday or Sunday)
-  if (!isClassDay(date)) {
-    return NextResponse.json({ error: "Attendance can only be marked on Saturday or Sunday" }, { status: 400 });
-  }
-
-  // Validate date is not before app launch
-  if (date < APP_LAUNCH_DATE) {
-    return NextResponse.json({ error: `Records before ${APP_LAUNCH_DATE} are not available` }, { status: 400 });
-  }
-
-  // Validate attendance data
   if (!attendance || !Array.isArray(attendance)) {
     return NextResponse.json({ error: "Invalid attendance data" }, { status: 400 });
   }
@@ -128,51 +129,30 @@ export async function POST(request: Request) {
   const dateValue = new Date(`${date}T00:00:00.000Z`);
 
   try {
-    // Use a transaction to ensure all updates are atomic
-    await prisma.$transaction(async (tx) => {
-      for (const record of attendance) {
-        const { userId, status } = record;
-
-        // Validate status
-        if (status !== "PRESENT" && status !== "ABSENT") {
-          throw new Error(`Invalid status: ${status}`);
-        }
-
-        // Check if user exists
-        const user = await tx.user.findUnique({
-          where: { id: userId },
-          select: { createdAt: true },
-        });
-
-        if (!user) {
-          throw new Error(`User not found: ${userId}`);
-        }
-
-        // Check if user had joined by the selected date
-        const userJoinDate = user.createdAt.toISOString().slice(0, 10);
-        if (userJoinDate > date) {
-          throw new Error(`User joined after the selected date: ${userId}`);
-        }
-
-        // Upsert attendance record
-        await tx.attendanceLog.upsert({
+    await prisma.$transaction(
+      attendance.map((item: { userId: string; status: string; applicationStatus?: string; applicationNote?: string }) =>
+        prisma.attendanceLog.upsert({
           where: {
             userId_date: {
-              userId,
+              userId: item.userId,
               date: dateValue,
             },
           },
-          create: {
-            userId,
-            date: dateValue,
-            status,
-          },
           update: {
-            status,
+            status: item.status as "PRESENT" | "ABSENT",
+            applicationStatus: item.applicationStatus as "SUBMITTED" | "NOT_SUBMITTED" | null,
+            applicationNote: item.applicationNote || null,
           },
-        });
-      }
-    });
+          create: {
+            userId: item.userId,
+            date: dateValue,
+            status: item.status as "PRESENT" | "ABSENT",
+            applicationStatus: item.applicationStatus as "SUBMITTED" | "NOT_SUBMITTED" | null,
+            applicationNote: item.applicationNote || null,
+          },
+        })
+      )
+    );
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
