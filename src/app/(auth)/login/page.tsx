@@ -62,7 +62,7 @@ function LoginForm() {
     <div>
       <div className="mb-6 flex justify-center">
         <img
-          src="/logo-horizontal.svg"
+          src="/logo-horizontal.png"
           alt="Track Your Amaal"
           className="h-12 w-auto"
         />
