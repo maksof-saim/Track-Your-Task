@@ -60,6 +60,13 @@ function LoginForm() {
 
   return (
     <div>
+      <div className="mb-6 flex justify-center">
+        <img
+          src="/logo-horizontal.svg"
+          alt="Track Your Amaal"
+          className="h-12 w-auto"
+        />
+      </div>
       <h2 className="mb-1 text-lg font-semibold text-foreground">Sign In</h2>
       <p className="mb-6 text-sm text-foreground/60">
         Sign in to view your worship records

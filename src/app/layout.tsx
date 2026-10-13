@@ -17,6 +17,15 @@ export const metadata: Metadata = {
   title: "Track Your Amaal — Amaal Tracker",
   description:
     "Track your daily prayers and zikr, monitor your worship trends.",
+  icons: {
+    icon: [
+      { url: "/favicon-32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
+  manifest: "/manifest.json",
 };
 
 export default function RootLayout({

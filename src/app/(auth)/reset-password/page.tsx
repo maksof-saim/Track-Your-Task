@@ -58,6 +58,13 @@ function ResetForm() {
   if (done) {
     return (
       <div>
+        <div className="mb-6 flex justify-center">
+          <img
+            src="/logo-horizontal.svg"
+            alt="Track Your Amaal"
+            className="h-12 w-auto"
+          />
+        </div>
         <h2 className="mb-2 text-lg font-semibold text-foreground">
           Password updated successfully
         </h2>
@@ -76,6 +83,13 @@ function ResetForm() {
 
   return (
     <div>
+      <div className="mb-6 flex justify-center">
+        <img
+          src="/logo-horizontal.svg"
+          alt="Track Your Amaal"
+          className="h-12 w-auto"
+        />
+      </div>
       <h2 className="mb-1 text-lg font-semibold text-foreground">
         Set New Password
       </h2>
