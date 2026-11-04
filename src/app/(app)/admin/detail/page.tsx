@@ -173,7 +173,7 @@ export default function AdminUserDetailPage() {
                 onClick={() => router.push(`/admin/40day-record?userId=${userId}`)}
                 className="rounded-lg bg-primary-500 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-600"
               >
-                40-Day Record
+                7-Day Record
               </button>
               <button
                 onClick={goToPreviousDay}
@@ -266,7 +266,7 @@ export default function AdminUserDetailPage() {
               onClick={() => router.push(`/admin/40day-record?userId=${userId}`)}
               className="rounded-lg bg-primary-500 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-600"
             >
-              40-Day Record
+              7-Day Record
             </button>
             <button
               onClick={goToPreviousDay}

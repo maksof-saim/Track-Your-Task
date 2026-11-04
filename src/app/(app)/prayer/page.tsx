@@ -285,7 +285,7 @@ export default function PrayerPage() {
         <AddCustomItem
           type="prayer"
           onAdd={addCustomPrayer}
-          placeholder="e.g., Tahajud, Sunnah, etc."
+          placeholder="e.g., Salat ul Tawbah, Sunnah, etc."
         />
       </div> */}
 

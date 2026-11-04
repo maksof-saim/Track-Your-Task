@@ -1,5 +1,5 @@
 export const TILAWAT_ITEMS = [
-  { key: "QURAN_TILAWAT", label: "Quran ki Tilawat" },
+  { key: "QURAN_2_RUKU", label: "Quran  ki Tilawat (2 Ruku)", hint: "Recite 2 Ruku daily" },
   { key: "SURAH_YASEEN", label: "Surah Yaseen" },
   { key: "SURAH_WAQIAH", label: "Surah Waqiah" },
   { key: "SURAH_MULK", label: "Surah Mulk" },
@@ -15,6 +15,8 @@ export const HIFAZAT_ITEMS = [
 export const AZKAAR_TARGET_ITEMS = [
   { name: "Astaghfar", target: 100 },
   { name: "Durood Shareef", target: 100 },
+  { name: "Third Kalma", target: 100 },
+  { name: "First Kalma", target: 100 },
   { name: "La ilaha illallah", target: 100 },
   { name: "SubhanAllah Walhamdulillah Wa La ilaha illallah Wallahu Akbar", target: 100 },
 ] as const;

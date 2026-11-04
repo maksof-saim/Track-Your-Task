@@ -45,7 +45,7 @@ const STATUS_STYLES: Record<string, string> = {
   QAZA: "border-status-qaza bg-status-qaza/10 text-status-qaza",
 };
 
-export default function Admin40DayRecordPage() {
+export default function Admin7DayRecordPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const userId = searchParams.get("userId");
@@ -66,7 +66,7 @@ export default function Admin40DayRecordPage() {
         const res = await fetch(`/api/admin/user-40day-record?userId=${userId}`);
         if (!res.ok) {
           const err = await res.json();
-          throw new Error(err.error || "Failed to fetch 40-day record");
+          throw new Error(err.error || "Failed to fetch 7-day record");
         }
         const result = await res.json();
         setData(result);
@@ -86,7 +86,7 @@ export default function Admin40DayRecordPage() {
         <div className="flex items-center justify-center rounded-2xl border border-border bg-surface p-12">
           <div className="text-center">
             <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
-            <p className="text-sm text-foreground/60">Loading 40-day record...</p>
+            <p className="text-sm text-foreground/60">Loading 7-day record...</p>
           </div>
         </div>
       </div>
@@ -135,7 +135,7 @@ export default function Admin40DayRecordPage() {
             </div>
           </div>
           <div className="text-right">
-            <p className="text-sm font-medium text-foreground/60">40-Day Challenge</p>
+            <p className="text-sm font-medium text-foreground/60">7-Day Challenge</p>
             <p className="text-xs text-foreground/50">
               {formatDisplayDate(data.challengePeriod.start)} - {formatDisplayDate(data.challengePeriod.end)}
             </p>

@@ -57,7 +57,7 @@ export default function AdminUsersTable() {
     router.push(`/admin/detail?userId=${userId}&date=${dateParam}`);
   };
 
-  const handleView40Day = (userId: string) => {
+  const handleView7Day = (userId: string) => {
     router.push(`/admin/40day-record?userId=${userId}`);
   };
 
@@ -293,10 +293,10 @@ export default function AdminUsersTable() {
                       Detail Record
                     </button>
                     <button
-                      onClick={() => handleView40Day(u.id)}
+                      onClick={() => handleView7Day(u.id)}
                       className="flex-1 rounded-lg border border-border bg-surface-muted px-3 py-2 text-xs font-semibold text-foreground hover:border-primary-300 transition-colors"
                     >
-                      40 Days
+                      7 Days
                     </button>
                   </div>
                 </div>
@@ -349,10 +349,10 @@ export default function AdminUsersTable() {
                             Detail Record
                           </button>
                           <button
-                            onClick={() => handleView40Day(u.id)}
+                            onClick={() => handleView7Day(u.id)}
                             className="rounded-lg border border-border bg-surface-muted px-3 py-1.5 text-xs font-semibold text-foreground hover:border-primary-300 transition-colors"
                           >
-                            40 Days
+                            7 Days
                           </button>
                         </div>
                       </td>

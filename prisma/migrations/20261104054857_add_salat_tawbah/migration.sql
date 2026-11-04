@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "PrayerName" ADD VALUE 'SALAT_TAWBAH';

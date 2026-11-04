@@ -2,9 +2,9 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
-// 40-day challenge period
-const CHALLENGE_START = "2026-09-21";
-const CHALLENGE_END = "2026-10-31";
+// 7-day challenge period
+const CHALLENGE_START = "2026-11-02";
+const CHALLENGE_END = "2026-11-08";
 
 // Retry helper function for database operations
 async function withRetry<T>(
@@ -102,7 +102,7 @@ export async function GET(request: Request) {
   // Group records by date
   const recordsByDate = new Map<string, any>();
 
-  // Initialize all 40 days
+  // Initialize all 7 days
   const startDate = new Date(CHALLENGE_START);
   const endDate = new Date(CHALLENGE_END);
   const currentDate = new Date(startDate);
@@ -185,7 +185,7 @@ export async function GET(request: Request) {
     challengePeriod: {
       start: CHALLENGE_START,
       end: CHALLENGE_END,
-      totalDays: 40,
+      totalDays: 7,
     },
     records,
     stats: {
