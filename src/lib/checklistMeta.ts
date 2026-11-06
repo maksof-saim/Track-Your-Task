@@ -15,8 +15,6 @@ export const HIFAZAT_ITEMS = [
 export const AZKAAR_TARGET_ITEMS = [
   { name: "Astaghfar", target: 100 },
   { name: "Durood Shareef", target: 100 },
-  { name: "Third Kalma", target: 100 },
-  { name: "First Kalma", target: 100 },
   { name: "La ilaha illallah", target: 100 },
   { name: "SubhanAllah Walhamdulillah Wa La ilaha illallah Wallahu Akbar", target: 100 },
 ] as const;

@@ -3,8 +3,8 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 // 7-day challenge period
-const CHALLENGE_START = "2026-11-02";
-const CHALLENGE_END = "2026-11-08";
+const CHALLENGE_START = "2026-11-06";
+const CHALLENGE_END = "2026-11-13";
 
 // Retry helper function for database operations
 async function withRetry<T>(
