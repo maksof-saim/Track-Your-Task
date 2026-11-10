@@ -22,6 +22,12 @@ export default auth((req) => {
     loginUrl.searchParams.set("callbackUrl", pathname + search);
     return NextResponse.redirect(loginUrl);
   }
+
+  const response = NextResponse.next();
+  if (!isPublicPage) {
+    response.headers.set("X-Robots-Tag", "noindex, nofollow");
+  }
+  return response;
 });
 
 export const config = {
