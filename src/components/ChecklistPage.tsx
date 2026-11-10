@@ -92,7 +92,7 @@ export default function ChecklistPage({
       toast.success(`${title} saved successfully!`, {
         description: "Your record has been updated.",
       });
-      setTimeout(() => router.push("/"), 1500);
+      setTimeout(() => router.push("/dashboard"), 1500);
     } else {
       const data = await res.json().catch(() => ({}));
       toast.error("Failed to save record", {

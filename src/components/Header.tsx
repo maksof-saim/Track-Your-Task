@@ -22,7 +22,7 @@ export default function Header({ userName }: { userName: string }) {
             <MenuIcon className="h-5 w-5" />
           </button>
 
-          <Link href="/" className="flex min-w-0 items-center">
+          <Link href="/dashboard" className="flex min-w-0 items-center">
             <img
               src="/logo-horizontal-white.png"
               alt="Track Your Amaal"

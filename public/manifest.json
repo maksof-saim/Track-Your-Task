@@ -2,7 +2,7 @@
   "name": "Track Your Amaal",
   "short_name": "Amaal Tracker",
   "description": "Track your daily prayers and zikr, monitor your worship trends.",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#16a34a",
