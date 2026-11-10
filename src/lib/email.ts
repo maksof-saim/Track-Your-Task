@@ -4,7 +4,7 @@ import { RESET_TOKEN_TTL_MS } from "@/lib/password-reset";
 type ResetEmail = { to: string; name: string; resetUrl: string };
 
 const APP_NAME = "Track Your Amaal";
-const TAGLINE = "Prayers & Zikr Tracker";
+const TAGLINE = "Amaal Tracker";
 
 const COLORS = {
   emerald: "#0b5d4b",
