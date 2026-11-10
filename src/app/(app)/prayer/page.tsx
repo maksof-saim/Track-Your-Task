@@ -138,7 +138,7 @@ export default function PrayerPage() {
       toast.success("Prayer record saved successfully!", {
         description: "Your prayer status has been recorded.",
       });
-      setTimeout(() => router.push("/"), 1500);
+      setTimeout(() => router.push("/dashboard"), 1500);
     } else {
       const errorRes = !standardRes.ok ? standardRes : customRes;
       const data = await errorRes.json().catch(() => ({}));

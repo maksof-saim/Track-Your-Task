@@ -5,7 +5,7 @@ import AdminUsersTable from "@/components/AdminUsersTable";
 export default async function AdminPage() {
   const session = await auth();
   if (session?.user?.role !== "ADMIN") {
-    redirect("/");
+    redirect("/dashboard");
   }
 
   return (

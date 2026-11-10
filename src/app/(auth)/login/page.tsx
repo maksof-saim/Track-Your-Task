@@ -54,7 +54,9 @@ function LoginForm() {
       return;
     }
 
-    router.push(searchParams.get("callbackUrl") ?? "/");
+    const raw = searchParams.get("callbackUrl") ?? "";
+    const isSafe = raw.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\");
+    router.push(isSafe && raw !== "/" ? raw : "/dashboard");
     router.refresh();
   }
 
