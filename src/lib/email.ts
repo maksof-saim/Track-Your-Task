@@ -21,6 +21,9 @@ export async function sendPasswordResetEmail({ to, name, resetUrl }: ResetEmail)
     }),
   });
 
-  if (!response.ok) throw new Error(`Email provider returned ${response.status}`);
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Email provider returned ${response.status}: ${body}`);
+  }
   return true;
 }
