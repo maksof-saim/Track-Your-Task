@@ -20,7 +20,7 @@ export const resetPasswordSchema = z.object({
   password: z.string().min(8, "Password must be at least 8 characters"),
 });
 
-export const PRAYER_NAMES = ["FAJR", "DHUHR", "ASR", "MAGHRIB", "ISHA"] as const;
+export const PRAYER_NAMES = ["FAJR", "DHUHR", "ASR", "MAGHRIB", "ISHA", "SALAT_TAWBAH"] as const;
 export const PRAYER_STATUSES = ["JAMAAT", "INFRADI", "QAZA"] as const;
 
 export const prayerLogSchema = z.object({
@@ -33,6 +33,16 @@ export const prayerLogSchema = z.object({
       }),
     )
     .min(1, "At least one prayer entry is required"),
+}).superRefine((data, ctx) => {
+  data.entries.forEach((entry, index) => {
+    if (entry.prayer === "SALAT_TAWBAH" && entry.status !== "INFRADI") {
+      ctx.addIssue({
+        code: "custom",
+        path: ["entries", index, "status"],
+        message: "Salat ul Tawbah can only be marked as Infradi",
+      });
+    }
+  });
 });
 
 export const zikrLogSchema = z.object({

@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { PRAYERS } from "@/lib/prayerMeta";
+import { PRAYERS, FARD_PRAYERS } from "@/lib/prayerMeta";
 import { TILAWAT_ITEMS, HIFAZAT_ITEMS, isFriday } from "@/lib/checklistMeta";
 
 export function isoDateDaysAgoUTC(days: number): string {
@@ -62,7 +62,10 @@ export async function getUserAnalytics(userId: string, targetDate?: string) {
   const totalLogged = jamaat + infradi + qaza;
 
   const todayStatuses = byDate.get(todayIso) ?? {};
-  const todayLoggedCount = Object.values(todayStatuses).filter(Boolean).length;
+  const fardKeys = new Set(FARD_PRAYERS.map((p) => p.key));
+  const todayLoggedCount = Object.entries(todayStatuses).filter(
+    ([key, status]) => status && fardKeys.has(key as (typeof FARD_PRAYERS)[number]["key"]),
+  ).length;
 
   const zikrToday = zikrLogs
     .filter((z) => z.date.toISOString().slice(0, 10) === todayIso)
@@ -77,7 +80,7 @@ export async function getUserAnalytics(userId: string, targetDate?: string) {
   return {
     grid,
     todayLoggedCount,
-    totalPrayers: PRAYERS.length,
+    totalPrayers: FARD_PRAYERS.length,
     infradiPercent: totalLogged ? Math.round((infradi / totalLogged) * 100) : 0,
     qazaCount: qaza,
     totalLogged,

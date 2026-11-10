@@ -104,12 +104,14 @@ enum PrayerName {
   ASR
   MAGHRIB
   ISHA
+  SALAT_TAWBAH
 }
 
 enum PrayerStatus {
   JAMAAT
   INFRADI
   QAZA
+  DONE
 }
 
 enum ZikrMode {

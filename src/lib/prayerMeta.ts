@@ -1,12 +1,15 @@
 export const PRAYERS = [
-  { key: "FAJR", label: "Fajr" },
-  { key: "DHUHR", label: "Zuhr" },
-  { key: "ASR", label: "Asr" },
-  { key: "MAGHRIB", label: "Maghrib" },
-  { key: "ISHA", label: "Isha" },
+  { key: "FAJR", label: "Fajr", nafl: false },
+  { key: "DHUHR", label: "Zuhr", nafl: false },
+  { key: "ASR", label: "Asr", nafl: false },
+  { key: "MAGHRIB", label: "Maghrib", nafl: false },
+  { key: "ISHA", label: "Isha", nafl: false },
+  { key: "SALAT_TAWBAH", label: "Salat ul Tawbah", nafl: true },
 ] as const;
 
 export type PrayerKey = (typeof PRAYERS)[number]["key"];
+
+export const FARD_PRAYERS = PRAYERS.filter((p) => !p.nafl);
 
 export const STATUSES = [
   { key: "JAMAAT", label: "Jamaat", hint: "Masjid mein baa-jamaat" },
@@ -15,6 +18,14 @@ export const STATUSES = [
 ] as const;
 
 export type StatusKey = (typeof STATUSES)[number]["key"];
+
+export function getPrayerStatuses(prayerKey: PrayerKey) {
+  const prayer = PRAYERS.find((p) => p.key === prayerKey);
+  if (prayer?.nafl) {
+    return STATUSES.filter((s) => s.key === "INFRADI");
+  }
+  return STATUSES;
+}
 
 export function todayISO(): string {
   const now = new Date();
