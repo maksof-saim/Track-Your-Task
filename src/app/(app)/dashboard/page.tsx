@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { PRAYERS, formatDisplayDate, getPrayerLabel } from "@/lib/prayerMeta";
+import { PRAYERS, formatDisplayDate, getPrayerLabel, todayISO } from "@/lib/prayerMeta";
 import { ChartIcon, PrayerIcon, TasbihIcon, BookIcon, ShieldIcon } from "@/components/icons";
 
 type Analytics = {
@@ -32,7 +32,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/analytics")
+    fetch(`/api/analytics?today=${todayISO()}`)
       .then((res) => res.json())
       .then((result) => {
         if (!cancelled) {

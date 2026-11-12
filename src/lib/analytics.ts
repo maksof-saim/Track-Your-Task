@@ -2,22 +2,24 @@ import { prisma } from "@/lib/prisma";
 import { PRAYERS, FARD_PRAYERS } from "@/lib/prayerMeta";
 import { TILAWAT_ITEMS, HIFAZAT_ITEMS, isFriday } from "@/lib/checklistMeta";
 
+/** Today's date in UTC (YYYY-MM-DD) minus N days, independent of the machine's time zone. */
 export function isoDateDaysAgoUTC(days: number): string {
-  const now = new Date();
-  now.setDate(now.getDate() - days);
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+}
+
+/** Shift a YYYY-MM-DD date by N days using plain calendar math. */
+function shiftIso(iso: string, days: number): string {
+  const [year, month, day] = iso.split("-").map(Number);
+  return new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
 }
 
 export async function getUserAnalytics(userId: string, targetDate?: string) {
   const RANGE_DAYS = 30;
   const GRID_DAYS = 14;
-  const since = new Date(`${isoDateDaysAgoUTC(RANGE_DAYS - 1)}T00:00:00.000`);
 
-  // Use targetDate if provided, otherwise use today
+  // The user's own "today" (sent by the browser), or the server's UTC date as a fallback.
   const todayIso = targetDate || isoDateDaysAgoUTC(0);
+  const since = new Date(`${shiftIso(todayIso, -(RANGE_DAYS - 1))}T00:00:00.000Z`);
 
   // Run queries sequentially to avoid database connection pool exhaustion
   const prayerLogs = await prisma.prayerLog.findMany({
@@ -43,7 +45,7 @@ export async function getUserAnalytics(userId: string, targetDate?: string) {
   }
 
   const grid = Array.from({ length: GRID_DAYS }, (_, i) => {
-    const iso = isoDateDaysAgoUTC(GRID_DAYS - 1 - i);
+    const iso = shiftIso(todayIso, -(GRID_DAYS - 1 - i));
     const statuses = byDate.get(iso) ?? {};
     return {
       date: iso,
