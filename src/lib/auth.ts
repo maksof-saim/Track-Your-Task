@@ -3,6 +3,7 @@ import Credentials from "next-auth/providers/credentials";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
+import { loginSchema } from "@/lib/validation";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -14,11 +15,17 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: { label: "Password", type: "password" },
       },
       authorize: async (credentials) => {
-        const email = credentials?.email as string | undefined;
-        const password = credentials?.password as string | undefined;
-        if (!email || !password) return null;
+        const parsed = loginSchema.safeParse(credentials);
+        if (!parsed.success) return null;
 
-        const user = await prisma.user.findUnique({ where: { email } });
+        const { email, password } = parsed.data;
+
+        // Normalized email first; the fallback covers any older account saved with capital letters.
+        const user =
+          (await prisma.user.findUnique({ where: { email } })) ??
+          (await prisma.user.findFirst({
+            where: { email: { equals: email, mode: "insensitive" } },
+          }));
         if (!user) return null;
 
         const isValid = await compare(password, user.passwordHash);
