@@ -66,3 +66,45 @@ export const checklistLogSchema = z.object({
     )
     .min(1, "At least one checklist item is required"),
 });
+
+const isoDateSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format. Use YYYY-MM-DD")
+  .refine((value) => {
+    const date = new Date(`${value}T00:00:00.000Z`);
+    return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+  }, "Invalid date");
+
+export const customPrayerLogSchema = z.object({
+  date: isoDateSchema,
+  customEntries: z
+    .array(
+      z.object({
+        customPrayerId: z.string().trim().min(1).max(100),
+        status: z.enum(PRAYER_STATUSES),
+      }),
+    )
+    .min(1, "At least one prayer entry is required")
+    .max(50),
+});
+
+export const customZikrLogSchema = z.object({
+  date: isoDateSchema,
+  customZikrId: z.string().trim().min(1).max(100),
+  mode: z.enum(["COUNT", "KASRAT"]),
+  count: z.number().int().min(0).max(1000000).nullish(),
+});
+
+export const bulkZikrLogSchema = z.object({
+  date: isoDateSchema,
+  entries: z
+    .array(
+      z.object({
+        name: z.string().trim().min(1, "Zikr name is required").max(80),
+        mode: z.enum(["COUNT", "KASRAT"]),
+        count: z.number().int().min(0).max(1000000).nullish(),
+      }),
+    )
+    .min(1)
+    .max(50),
+});
