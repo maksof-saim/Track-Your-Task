@@ -280,3 +280,29 @@ export function getNearestClassDay(iso: string): string {
   }
   return getNextClassDay(iso);
 }
+/**
+ * Server-side guard for "future" dates.
+ * The server runs in UTC, but users live in every time zone (UTC-12 to UTC+14),
+ * so a user's local "today" can be one day ahead of the server's UTC date.
+ * A date is rejected only if it is in the future in EVERY time zone,
+ * i.e. later than today's date in UTC+14 (the most advanced time zone).
+ */
+export function isFutureInEveryTimezone(iso: string): boolean {
+  const todayInUtcPlus14 = new Date(Date.now() + 14 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return iso > todayInUtcPlus14;
+}
+
+/**
+ * Accepts a "today" date sent by the browser, but only if it can really be
+ * "today" somewhere on Earth right now (UTC-12 to UTC+14).
+ * Returns undefined otherwise, so the caller can fall back to the server date.
+ */
+export function resolveClientToday(value: string | null | undefined): string | undefined {
+  if (!value || !isValidISODate(value)) return undefined;
+  if (new Date(`${value}T00:00:00Z`).toISOString().slice(0, 10) !== value) return undefined;
+
+  const now = Date.now();
+  const earliest = new Date(now - 12 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  const latest = new Date(now + 14 * 60 * 60 * 1000).toISOString().slice(0, 10);
+  return value >= earliest && value <= latest ? value : undefined;
+}

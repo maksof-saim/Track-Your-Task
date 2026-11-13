@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { zikrLogSchema } from "@/lib/validation";
-import { todayISO } from "@/lib/prayerMeta";
+import { isFutureInEveryTimezone } from "@/lib/dateUtils";
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     const { date, customZikrId, mode, count } = body;
 
     // Validate date is not in the future
-    if (date > todayISO()) {
+    if (isFutureInEveryTimezone(date)) {
       return NextResponse.json(
         { error: "Cannot save records for future dates" },
         { status: 400 },
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
     const { date, entries } = body;
 
     // Validate date is not in the future
-    if (date > todayISO()) {
+    if (isFutureInEveryTimezone(date)) {
       return NextResponse.json(
         { error: "Cannot save records for future dates" },
         { status: 400 },
@@ -133,7 +133,7 @@ export async function POST(request: Request) {
   const { date, name, mode, count } = parsed.data;
 
   // Validate date is not in the future
-  if (date > todayISO()) {
+  if (isFutureInEveryTimezone(date)) {
     return NextResponse.json(
       { error: "Cannot save records for future dates" },
       { status: 400 },

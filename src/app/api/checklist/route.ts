@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { checklistLogSchema, CHECKLIST_SECTIONS } from "@/lib/validation";
-import { todayISO } from "@/lib/prayerMeta";
+import { isFutureInEveryTimezone } from "@/lib/dateUtils";
 
 export async function GET(request: Request) {
   const session = await auth();
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
   const { date, section, items } = parsed.data;
 
   // Validate date is not in the future
-  if (date > todayISO()) {
+  if (isFutureInEveryTimezone(date)) {
     return NextResponse.json(
       { error: "Cannot save records for future dates" },
       { status: 400 },
