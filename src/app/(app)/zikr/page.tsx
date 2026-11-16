@@ -246,7 +246,7 @@ export default function ZikrPage() {
           );
         })}
 
-        <div className="sticky bottom-0 pt-4 bg-surface/95 backdrop-blur">
+        <div className="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] bg-surface/95 pb-4 pt-4 backdrop-blur sm:bottom-0">
           <button
             type="button"
             onClick={saveAll}

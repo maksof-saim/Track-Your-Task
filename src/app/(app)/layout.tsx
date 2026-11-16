@@ -20,7 +20,7 @@ export default async function AppLayout({
         <Header userName={userName} />
         <div className="flex min-w-0 flex-1">
           <Sidebar isAdmin={isAdmin} />
-          <main className="min-w-0 flex-1 bg-background px-4 py-6 sm:px-8 sm:py-8">
+          <main className="min-w-0 flex-1 bg-background px-4 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-6 sm:px-8 sm:py-8">
             {children}
           </main>
         </div>
