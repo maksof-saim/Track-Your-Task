@@ -1,5 +1,5 @@
-export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL ?? "saimsyed162@gmail.com").toLowerCase();
+export const ADMIN_EMAIL = (process.env.ADMIN_EMAIL ?? "").trim().toLowerCase();
 
 export function isAdminEmail(email: string): boolean {
-  return email.toLowerCase() === ADMIN_EMAIL;
+  return ADMIN_EMAIL !== "" && email.trim().toLowerCase() === ADMIN_EMAIL;
 }
