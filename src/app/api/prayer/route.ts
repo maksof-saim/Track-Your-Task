@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { prayerLogSchema } from "@/lib/validation";
+import { prayerLogSchema, customPrayerLogSchema } from "@/lib/validation";
 import { isFutureInEveryTimezone } from "@/lib/dateUtils";
 
 export async function GET(request: Request) {
@@ -54,10 +54,21 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
+  if (!body || typeof body !== "object" || Array.isArray(body)) {
+    return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+  }
 
   // Handle custom prayer entries
   if (body.customEntries) {
-    const { date, customEntries } = body;
+    const parsedCustom = customPrayerLogSchema.safeParse(body);
+    if (!parsedCustom.success) {
+      return NextResponse.json(
+        { error: parsedCustom.error.issues[0]?.message ?? "Invalid data" },
+        { status: 400 },
+      );
+    }
+
+    const { date, customEntries } = parsedCustom.data;
 
     // Validate date is not in the future
     if (isFutureInEveryTimezone(date)) {
@@ -70,7 +81,7 @@ export async function POST(request: Request) {
     const dateValue = new Date(`${date}T00:00:00.000Z`);
 
     await prisma.$transaction(
-      customEntries.map((entry: any) =>
+      customEntries.map((entry) =>
         prisma.prayerLog.upsert({
           where: {
             userId_date_customPrayerId: {
