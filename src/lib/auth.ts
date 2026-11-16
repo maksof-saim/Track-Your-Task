@@ -1,5 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import Google from "next-auth/providers/google";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
@@ -7,7 +9,9 @@ import { loginSchema } from "@/lib/validation";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
+  adapter: PrismaAdapter(prisma as unknown as Parameters<typeof PrismaAdapter>[0]),
   providers: [
+    Google({ allowDangerousEmailAccountLinking: true }),
     Credentials({
       name: "credentials",
       credentials: {
@@ -26,7 +30,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           (await prisma.user.findFirst({
             where: { email: { equals: email, mode: "insensitive" } },
           }));
-        if (!user) return null;
+        if (!user?.passwordHash) return null;
 
         const isValid = await compare(password, user.passwordHash);
         if (!isValid) return null;
