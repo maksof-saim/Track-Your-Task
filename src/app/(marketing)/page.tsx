@@ -182,12 +182,18 @@ export default function LandingPage() {
             <footer className="bg-[#084538] px-5 py-8 text-center text-sm text-[#e3cf9a]">
                 <p className="text-base font-semibold text-white">Track Your Amaal</p>
                 <p className="mt-1">Track your daily prayers and zikr</p>
-                <nav aria-label="Footer" className="mt-3 flex justify-center gap-6">
+                <nav aria-label="Footer" className="mt-3 flex flex-wrap justify-center gap-x-6">
                     <Link href="/login" className={`inline-flex min-h-11 items-center rounded-md hover:text-white ${focusRing}`}>
                         Sign in
                     </Link>
                     <Link href="/register" className={`inline-flex min-h-11 items-center rounded-md hover:text-white ${focusRing}`}>
                         Create account
+                    </Link>
+                    <Link href="/privacy" className={`inline-flex min-h-11 items-center rounded-md hover:text-white ${focusRing}`}>
+                        Privacy Policy
+                    </Link>
+                    <Link href="/terms" className={`inline-flex min-h-11 items-center rounded-md hover:text-white ${focusRing}`}>
+                        Terms of Use
                     </Link>
                 </nav>
                 <p className="mt-3 text-xs opacity-80">&copy; {new Date().getFullYear()} Track Your Amaal</p>

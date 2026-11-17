@@ -81,7 +81,7 @@ export const customPrayerLogSchema = z.object({
     .array(
       z.object({
         customPrayerId: z.string().trim().min(1).max(100),
-        status: z.enum(PRAYER_STATUSES),
+        status: z.enum(["JAMAAT", "INFRADI", "QAZA", "DONE"]),
       }),
     )
     .min(1, "At least one prayer entry is required")
