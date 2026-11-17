@@ -35,10 +35,15 @@ export default function ZikrPage() {
   }
 
   useEffect(() => {
+    let cancelled = false;
     setLoading(true);
     fetch(`/api/zikr?date=${date}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error("Request failed");
+        return res.json();
+      })
       .then((data) => {
+        if (cancelled) return;
         const nextEntries: ZikrEntry[] = data.entries ?? [];
         setEntries(nextEntries);
         setDrafts(
@@ -50,7 +55,23 @@ export default function ZikrPage() {
           ),
         );
       })
-      .finally(() => setLoading(false));
+      .catch(() => {
+        if (cancelled) return;
+        // Clear the old date's values so they cannot be saved under the new date by mistake.
+        setEntries([]);
+        setDrafts(
+          Object.fromEntries(AZKAAR_TARGET_ITEMS.map(({ name }) => [name, initialDraft()])),
+        );
+        toast.error("Could not load your zikr", {
+          description: "Please check your internet connection and refresh the page.",
+        });
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [date]);
 
   function updateDraft(name: string, changes: Partial<Draft>) {
@@ -67,9 +88,6 @@ export default function ZikrPage() {
           return null;
         }
         if (!Number.isInteger(count) || count < 0) {
-          return null;
-        }
-        if (count === 0) {
           return null;
         }
         if (count > 1000000) {
@@ -250,7 +268,7 @@ export default function ZikrPage() {
           <button
             type="button"
             onClick={saveAll}
-            disabled={pending === "all"}
+            disabled={pending === "all" || loading}
             className="flex w-full items-center justify-center rounded-xl bg-primary-500 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50 shadow-sm"
           >
             {pending === "all" ? (
