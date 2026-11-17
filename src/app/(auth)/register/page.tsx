@@ -10,6 +10,7 @@ export default function RegisterPage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -38,42 +39,45 @@ export default function RegisterPage() {
       setError("Please enter a password");
       return;
     }
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters");
+    if (password.length < 8) {
+      setError("Password must be at least 8 characters");
       return;
     }
 
     setLoading(true);
 
-    const res = await fetch("/api/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, password }),
-    });
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, password }),
+      });
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      setError(data.error ?? "Something went wrong");
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? "Something went wrong");
+        return;
+      }
+
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        setError("Account created successfully, please sign in");
+        router.push("/login");
+        return;
+      }
+
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setError("Could not reach the server. Please check your internet connection and try again.");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
-
-    setLoading(false);
-
-    if (result?.error) {
-      setError("Account created successfully, please sign in");
-      router.push("/login");
-      return;
-    }
-
-    router.push("/dashboard");
-    router.refresh();
   }
 
   return (
@@ -98,6 +102,7 @@ export default function RegisterPage() {
           <input
             id="name"
             type="text"
+            autoComplete="name"
             required
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -127,19 +132,34 @@ export default function RegisterPage() {
           <label htmlFor="password" className="mb-1 block text-sm font-medium text-foreground/80">
             Password
           </label>
-          <input
-            id="password"
-            type="password"
-            required
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
-            placeholder="Minimum 6 characters"
-          />
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-lg border border-border bg-surface py-2 pe-16 ps-3 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+              placeholder="Minimum 8 characters"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 end-0 flex min-w-14 items-center justify-center px-3 text-xs font-medium text-foreground/60 hover:text-foreground"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
         </div>
 
-        {error && <p className="text-sm text-status-qaza">{error}</p>}
+        {error && (
+          <p role="alert" className="text-sm text-status-qaza">
+            {error}
+          </p>
+        )}
 
         <button
           type="submit"
@@ -177,7 +197,19 @@ export default function RegisterPage() {
         Continue with Google
       </button>
 
-      <p className="mt-6 text-center text-sm text-foreground/60">
+      <p className="mt-4 text-center text-xs text-foreground/50">
+        By creating an account you agree to our{" "}
+        <Link href="/terms" className="underline hover:text-foreground">
+          Terms of Use
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="underline hover:text-foreground">
+          Privacy Policy
+        </Link>
+        .
+      </p>
+
+      <p className="mt-5 text-center text-sm text-foreground/60">
         Already have an account?{" "}
         <Link href="/login" className="font-medium text-primary-500 hover:underline">
           Sign in

@@ -13,11 +13,18 @@ export default function LoginPage() {
   );
 }
 
+function getSafeCallback(raw: string | null): string {
+  const value = raw ?? "";
+  const isSafe = value.startsWith("/") && !value.startsWith("//") && !value.startsWith("/\\");
+  return isSafe && value !== "/" ? value : "/dashboard";
+}
+
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -41,23 +48,25 @@ function LoginForm() {
 
     setLoading(true);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-    setLoading(false);
+      if (result?.error) {
+        setError("Invalid email or password");
+        return;
+      }
 
-    if (result?.error) {
-      setError("Invalid email or password");
-      return;
+      router.push(getSafeCallback(searchParams.get("callbackUrl")));
+      router.refresh();
+    } catch {
+      setError("Could not reach the server. Please check your internet connection and try again.");
+    } finally {
+      setLoading(false);
     }
-
-    const raw = searchParams.get("callbackUrl") ?? "";
-    const isSafe = raw.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\");
-    router.push(isSafe && raw !== "/" ? raw : "/dashboard");
-    router.refresh();
   }
 
   return (
@@ -93,23 +102,42 @@ function LoginForm() {
             placeholder="you@example.com"
           />
         </div>
-        <div className="-mt-2 text-right"><Link href="/forgot-password" className="text-sm font-medium text-primary-500 hover:underline">Forgot password?</Link></div>
+        <div className="-mt-2 text-right">
+          <Link href="/forgot-password" className="text-sm font-medium text-primary-500 hover:underline">
+            Forgot password?
+          </Link>
+        </div>
         <div>
           <label htmlFor="password" className="mb-1 block text-sm font-medium text-foreground/80">
             Password
           </label>
-          <input
-            id="password"
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
-            placeholder="••••••••"
-          />
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-lg border border-border bg-surface py-2 pe-16 ps-3 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+              placeholder="••••••••"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 end-0 flex min-w-14 items-center justify-center px-3 text-xs font-medium text-foreground/60 hover:text-foreground"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
         </div>
 
-        {error && <p className="text-sm text-status-qaza">{error}</p>}
+        {error && (
+          <p role="alert" className="text-sm text-status-qaza">
+            {error}
+          </p>
+        )}
 
         <button
           type="submit"
@@ -136,9 +164,7 @@ function LoginForm() {
       <button
         type="button"
         onClick={() => {
-          const raw = searchParams.get("callbackUrl") ?? "";
-          const isSafe = raw.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\");
-          signIn("google", { callbackUrl: isSafe && raw !== "/" ? raw : "/dashboard" });
+          signIn("google", { callbackUrl: getSafeCallback(searchParams.get("callbackUrl")) });
         }}
         className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-semibold text-foreground transition-colors hover:border-primary-300 hover:bg-primary-50/30"
       >
@@ -151,7 +177,19 @@ function LoginForm() {
         Continue with Google
       </button>
 
-      <p className="mt-6 text-center text-sm text-foreground/60">
+      <p className="mt-4 text-center text-xs text-foreground/50">
+        By continuing you agree to our{" "}
+        <Link href="/terms" className="underline hover:text-foreground">
+          Terms of Use
+        </Link>{" "}
+        and{" "}
+        <Link href="/privacy" className="underline hover:text-foreground">
+          Privacy Policy
+        </Link>
+        .
+      </p>
+
+      <p className="mt-5 text-center text-sm text-foreground/60">
         Don&apos;t have an account?{" "}
         <Link href="/register" className="font-medium text-primary-500 hover:underline">
           Register
