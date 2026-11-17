@@ -12,7 +12,7 @@ export type PrayerKey = (typeof PRAYERS)[number]["key"];
 export const FARD_PRAYERS = PRAYERS.filter((p) => !p.nafl);
 
 export const STATUSES = [
-  { key: "JAMAAT", label: "Jamaat", hint: "Masjid mein baa-jamaat" },
+  { key: "JAMAAT", label: "Jamaat", hint: "Baa-jamaat" },
   { key: "INFRADI", label: "Infradi", hint: "Akele parhi" },
   { key: "QAZA", label: "Qaza", hint: "Waqt guzar gaya" },
 ] as const;

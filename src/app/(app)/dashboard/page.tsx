@@ -26,6 +26,28 @@ const CELL_STYLES: Record<string, string> = {
   QAZA: "bg-status-qaza",
 };
 
+function currentStreak(grid: Analytics["grid"]): number {
+  const fardPrayers = PRAYERS.filter((prayer) => !prayer.nafl);
+  const isComplete = (day: Analytics["grid"][number]) =>
+    fardPrayers.every((prayer) => Boolean(day.statuses[prayer.key]));
+
+  let index = grid.length - 1;
+  // Today may still be in progress, so an incomplete today does not break the streak.
+  if (index >= 0 && !isComplete(grid[index])) index -= 1;
+
+  let streak = 0;
+  while (index >= 0 && isComplete(grid[index])) {
+    streak += 1;
+    index -= 1;
+  }
+  return streak;
+}
+
+function streakLabel(grid: Analytics["grid"]): string {
+  const streak = currentStreak(grid);
+  return `${streak}${streak >= grid.length ? "+" : ""} din`;
+}
+
 export default function DashboardPage() {
   const [data, setData] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -81,6 +103,11 @@ export default function DashboardPage() {
           value={data ? `${data.hifazatToday}/${data.hifazatTarget}` : "—"}
           accent="gold"
         />
+        <StatCard
+          icon={<ChartIcon className="h-5 w-5" />}
+          label={loading ? "..." : "Namaz Streak"}
+          value={data ? streakLabel(data.grid) : "—"}
+        />
       </div>
 
       <div className={`mb-6 grid gap-3 sm:grid-cols-2 ${loading ? "opacity-50" : ""}`}>
@@ -110,7 +137,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
+      <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
           <p className="font-medium text-foreground">Last 14 days</p>
           <Legend />
@@ -121,7 +148,7 @@ export default function DashboardPage() {
             <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
           </div>
         ) : data ? (
-          <div className="overflow-x-auto">
+          <div className="overflow-x-auto pb-1">
             <div className="min-w-140">
               <div className="mb-1 grid grid-cols-[70px_repeat(14,1fr)] gap-1">
                 <span />
@@ -142,7 +169,7 @@ export default function DashboardPage() {
                   <span className="text-xs text-foreground/60">{prayer.label}</span>
                   {data.grid.map((day) => {
                     const status = day.statuses[prayer.key];
-                    const dayLabel = prayer.key === "DHUHR" && new Date(day.date).getDay() === 5 ? "Jummah" : prayer.label;
+                    const dayLabel = getPrayerLabel(prayer.key, day.date);
                     return (
                       <span
                         key={day.date}
@@ -156,7 +183,7 @@ export default function DashboardPage() {
             </div>
           </div>
         ) : null}
-      </div> */}
+      </div>
     </div>
   );
 }
