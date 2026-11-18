@@ -3,8 +3,16 @@ import { hash } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { registerSchema } from "@/lib/validation";
 import { isAdminEmail } from "@/lib/admin";
+import { allowRequest, getClientIp, hashKey } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
+  if (!(await allowRequest("registerIp", hashKey(getClientIp(request.headers))))) {
+    return NextResponse.json(
+      { error: "Too many attempts. Please try again in a while." },
+      { status: 429 },
+    );
+  }
+
   const body = await request.json().catch(() => null);
   const parsed = registerSchema.safeParse(body);
 

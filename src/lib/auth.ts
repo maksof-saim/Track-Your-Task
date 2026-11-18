@@ -6,6 +6,7 @@ import { compare } from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/lib/auth.config";
 import { loginSchema } from "@/lib/validation";
+import { allowRequest, getClientIp, hashKey } from "@/lib/rate-limit";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
@@ -18,11 +19,18 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
       },
-      authorize: async (credentials) => {
+      authorize: async (credentials, request) => {
         const parsed = loginSchema.safeParse(credentials);
         if (!parsed.success) return null;
 
         const { email, password } = parsed.data;
+
+        // Slow down password guessing: limit attempts per IP and per email + IP.
+        const ip = getClientIp(request?.headers);
+        const allowed =
+          (await allowRequest("loginIp", hashKey(ip))) &&
+          (await allowRequest("loginEmail", hashKey(`${email}|${ip}`)));
+        if (!allowed) return null;
 
         // Normalized email first; the fallback covers any older account saved with capital letters.
         const user =

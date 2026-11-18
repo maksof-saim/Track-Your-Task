@@ -67,6 +67,10 @@ export default function PrivacyPage() {
                         Google Gmail, for sending password reset emails. Your email address and the reset link
                         pass through this service.
                     </li>
+                    <li>
+                        Upstash, for short-lived security counters (stored as anonymous hashes) that limit
+                        repeated login and sign-up attempts.
+                    </li>
                 </ul>
                 <p>These providers process information only to provide their services to us.</p>
             </LegalSection>
