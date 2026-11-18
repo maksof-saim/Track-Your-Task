@@ -58,6 +58,3 @@ export async function POST(request: Request) {
 
   return NextResponse.json(customPrayer, { status: 201 });
 }
-// {
-//   // TODO: Add DELETE method to delete custom prayers
-// }
