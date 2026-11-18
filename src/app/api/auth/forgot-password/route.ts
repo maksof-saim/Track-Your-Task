@@ -3,10 +3,27 @@ import { prisma } from "@/lib/prisma";
 import { forgotPasswordSchema } from "@/lib/validation";
 import { createResetToken, RESET_TOKEN_TTL_MS } from "@/lib/password-reset";
 import { sendPasswordResetEmail } from "@/lib/email";
+import { allowRequest, getClientIp, hashKey } from "@/lib/rate-limit";
+
+const GENERIC_MESSAGE = "Agar is email ka account hai to reset link bhej diya gaya hai.";
 
 export async function POST(request: Request) {
   const parsed = forgotPasswordSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Sahi email likhein" }, { status: 400 });
+
+  const ip = getClientIp(request.headers);
+  if (!(await allowRequest("forgotIp", hashKey(ip)))) {
+    return NextResponse.json(
+      { error: "Bahut zyada koshishein. Thori der baad dobara try karein." },
+      { status: 429 },
+    );
+  }
+
+  // Too many requests for the same email: answer normally but send nothing,
+  // so nobody can spam an inbox or learn whether the account exists.
+  if (!(await allowRequest("forgotEmail", hashKey(parsed.data.email)))) {
+    return NextResponse.json({ message: GENERIC_MESSAGE });
+  }
 
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
   let developmentResetUrl: string | undefined;
@@ -26,7 +43,7 @@ export async function POST(request: Request) {
   }
 
   return NextResponse.json({
-    message: "Agar is email ka account hai to reset link bhej diya gaya hai.",
+    message: GENERIC_MESSAGE,
     ...(process.env.NODE_ENV !== "production" && developmentResetUrl ? { developmentResetUrl } : {}),
   });
 }
