@@ -77,7 +77,14 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
-
+    // Every custom prayer must belong to the signed-in user.
+    const customIds = [...new Set(customEntries.map((entry) => entry.customPrayerId))];
+    const ownedCount = await prisma.customPrayer.count({
+      where: { id: { in: customIds }, userId: session.user.id },
+    });
+    if (ownedCount !== customIds.length) {
+      return NextResponse.json({ error: "Unknown custom prayer" }, { status: 400 });
+    }
     const dateValue = new Date(`${date}T00:00:00.000Z`);
 
     await prisma.$transaction(

@@ -37,7 +37,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
+
   // Handle custom zikr entries
+
   if (body.customZikrId) {
     const parsedCustom = customZikrLogSchema.safeParse(body);
     if (!parsedCustom.success) {
@@ -58,6 +60,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // The custom zikr must belong to the signed-in user.
+    const customZikr = await prisma.customZikr.findFirst({
+      where: { id: customZikrId, userId: session.user.id },
+      select: { id: true, name: true },
+    });
+    if (!customZikr) {
+      return NextResponse.json({ error: "Unknown custom zikr" }, { status: 400 });
+    }
+
     const dateValue = new Date(`${date}T00:00:00.000Z`);
 
     const log = await prisma.zikrLog.upsert({
@@ -65,15 +76,15 @@ export async function POST(request: Request) {
         userId_date_customZikrId: {
           userId: session.user.id,
           date: dateValue,
-          customZikrId,
+          customZikrId: customZikr.id,
         },
       },
-      update: { count, mode },
+      update: { count, mode, name: customZikr.name },
       create: {
         userId: session.user.id,
         date: dateValue,
-        customZikrId,
-        name: "Custom Zikr",
+        customZikrId: customZikr.id,
+        name: customZikr.name,
         count,
         mode,
       },
