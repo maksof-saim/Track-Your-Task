@@ -3,11 +3,13 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
+const MAX_CUSTOM_ITEMS = 30;
+
 const customTilawatSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
 });
 
-export async function GET(request: Request) {
+export async function GET() {
   const session = await auth();
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -38,6 +40,26 @@ export async function POST(request: Request) {
   }
 
   const { name } = parsed.data;
+  const lowerName = name.toLowerCase();
+
+  const existing = await prisma.customTilawat.findMany({
+    where: { userId: session.user.id },
+    select: { name: true },
+  });
+
+  if (existing.length >= MAX_CUSTOM_ITEMS) {
+    return NextResponse.json(
+      { error: `You can add up to ${MAX_CUSTOM_ITEMS} custom tilawat items` },
+      { status: 400 },
+    );
+  }
+
+  if (existing.some((item) => item.name.trim().toLowerCase() === lowerName)) {
+    return NextResponse.json(
+      { error: "You already have a tilawat item with this name" },
+      { status: 409 },
+    );
+  }
 
   const customTilawat = await prisma.customTilawat.create({
     data: { userId: session.user.id, name },
