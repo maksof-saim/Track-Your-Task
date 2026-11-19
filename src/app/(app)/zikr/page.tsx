@@ -1,7 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useState, type FormEvent } from "react";
 import { toast } from "sonner";
 import { todayISO, formatDisplayDate } from "@/lib/prayerMeta";
 import { AZKAAR_TARGET_ITEMS } from "@/lib/checklistMeta";
@@ -9,6 +8,7 @@ import { isFutureDate, getPreviousDay, getNextDay } from "@/lib/dateUtils";
 
 type ZikrMode = "COUNT" | "KASRAT";
 type ZikrEntry = { name: string; count: number; mode: ZikrMode };
+type CustomZikr = { id: string; name: string };
 type Draft = { mode: ZikrMode; count: string };
 
 const initialDraft = (entry?: ZikrEntry): Draft => ({
@@ -16,13 +16,36 @@ const initialDraft = (entry?: ZikrEntry): Draft => ({
   count: entry ? String(entry.count) : "",
 });
 
+const customKey = (id: string) => `custom:${id}`;
+
+function buildDrafts(entries: ZikrEntry[], customs: CustomZikr[]): Record<string, Draft> {
+  const result: Record<string, Draft> = {};
+  for (const { name } of AZKAAR_TARGET_ITEMS) {
+    result[name] = initialDraft(entries.find((entry) => entry.name === name));
+  }
+  for (const custom of customs) {
+    result[customKey(custom.id)] = initialDraft(entries.find((entry) => entry.name === custom.name));
+  }
+  return result;
+}
+
+function parseDraft(draft: Draft): { mode: ZikrMode; count: number } | null {
+  if (draft.mode === "KASRAT") return { mode: "KASRAT", count: 0 };
+  if (draft.count.trim() === "") return null;
+  const count = Number(draft.count);
+  if (!Number.isInteger(count) || count < 0 || count > 1000000) return null;
+  return { mode: "COUNT", count };
+}
+
 export default function ZikrPage() {
-  const router = useRouter();
   const [date, setDate] = useState(todayISO());
   const [entries, setEntries] = useState<ZikrEntry[]>([]);
+  const [customZikrs, setCustomZikrs] = useState<CustomZikr[]>([]);
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [loading, setLoading] = useState(true);
   const [pending, setPending] = useState<string | null>(null);
+  const [newName, setNewName] = useState("");
+  const [adding, setAdding] = useState(false);
 
   function handleDateChange(newDate: string) {
     if (isFutureDate(newDate)) {
@@ -37,31 +60,32 @@ export default function ZikrPage() {
   useEffect(() => {
     let cancelled = false;
     setLoading(true);
-    fetch(`/api/zikr?date=${date}`)
-      .then((res) => {
+
+    Promise.all([
+      fetch(`/api/zikr?date=${date}`).then((res) => {
         if (!res.ok) throw new Error("Request failed");
         return res.json();
-      })
-      .then((data) => {
+      }),
+      fetch("/api/custom/zikrs").then((res) => {
+        if (!res.ok) throw new Error("Request failed");
+        return res.json();
+      }),
+    ])
+      .then(([zikrData, customData]) => {
         if (cancelled) return;
-        const nextEntries: ZikrEntry[] = data.entries ?? [];
-        setEntries(nextEntries);
-        setDrafts(
-          Object.fromEntries(
-            AZKAAR_TARGET_ITEMS.map(({ name }) => [
-              name,
-              initialDraft(nextEntries.find((entry) => entry.name === name)),
-            ]),
-          ),
+        const nextEntries: ZikrEntry[] = zikrData.entries ?? [];
+        const nextCustoms: CustomZikr[] = (customData.customZikrs ?? []).map(
+          (item: { id: string; name: string }) => ({ id: item.id, name: item.name }),
         );
+        setEntries(nextEntries);
+        setCustomZikrs(nextCustoms);
+        setDrafts(buildDrafts(nextEntries, nextCustoms));
       })
       .catch(() => {
         if (cancelled) return;
         // Clear the old date's values so they cannot be saved under the new date by mistake.
         setEntries([]);
-        setDrafts(
-          Object.fromEntries(AZKAAR_TARGET_ITEMS.map(({ name }) => [name, initialDraft()])),
-        );
+        setDrafts(buildDrafts([], []));
         toast.error("Could not load your zikr", {
           description: "Please check your internet connection and refresh the page.",
         });
@@ -69,41 +93,94 @@ export default function ZikrPage() {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+
     return () => {
       cancelled = true;
     };
   }, [date]);
 
-  function updateDraft(name: string, changes: Partial<Draft>) {
-    setDrafts((current) => ({ ...current, [name]: { ...current[name], ...changes } }));
+  function updateDraft(key: string, changes: Partial<Draft>) {
+    setDrafts((current) => ({
+      ...current,
+      [key]: { ...(current[key] ?? initialDraft()), ...changes },
+    }));
+  }
+
+  async function addCustomZikr(event: FormEvent) {
+    event.preventDefault();
+    const name = newName.trim();
+    if (!name) {
+      toast.error("Please enter a name for your zikr");
+      return;
+    }
+
+    setAdding(true);
+    try {
+      const response = await fetch("/api/custom/zikrs", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        toast.error("Could not add zikr", { description: data.error || "Please try again." });
+        return;
+      }
+
+      setCustomZikrs((current) => [...current, { id: data.id, name: data.name }]);
+      setDrafts((current) => ({ ...current, [customKey(data.id)]: initialDraft() }));
+      setNewName("");
+      toast.success("Zikr added", { description: data.name });
+    } catch {
+      toast.error("Could not add zikr", {
+        description: "Please check your internet connection and try again.",
+      });
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function removeCustomZikr(custom: CustomZikr) {
+    const confirmed = window.confirm(
+      `Remove "${custom.name}"? Its saved records will also be deleted.`,
+    );
+    if (!confirmed) return;
+
+    try {
+      const response = await fetch(`/api/custom/zikrs/${custom.id}`, { method: "DELETE" });
+      if (!response.ok) {
+        toast.error("Could not remove zikr", { description: "Please try again." });
+        return;
+      }
+
+      setCustomZikrs((current) => current.filter((item) => item.id !== custom.id));
+      setDrafts((current) => {
+        const next = { ...current };
+        delete next[customKey(custom.id)];
+        return next;
+      });
+      setEntries((current) => current.filter((entry) => entry.name !== custom.name));
+      toast.success("Zikr removed");
+    } catch {
+      toast.error("Could not remove zikr", {
+        description: "Please check your internet connection and try again.",
+      });
+    }
   }
 
   async function saveAll() {
-    const validEntries = AZKAAR_TARGET_ITEMS.map(({ name }) => {
-      const draft = drafts[name] ?? initialDraft();
-      const count = Number(draft.count);
+    const builtIn = AZKAAR_TARGET_ITEMS.flatMap(({ name }) => {
+      const parsed = parseDraft(drafts[name] ?? initialDraft());
+      return parsed ? [{ name, ...parsed }] : [];
+    });
+    const custom = customZikrs.flatMap((item) => {
+      const parsed = parseDraft(drafts[customKey(item.id)] ?? initialDraft());
+      return parsed ? [{ customZikrId: item.id, ...parsed }] : [];
+    });
 
-      if (draft.mode === "COUNT") {
-        if (draft.count === "" || draft.count.trim() === "") {
-          return null;
-        }
-        if (!Number.isInteger(count) || count < 0) {
-          return null;
-        }
-        if (count > 1000000) {
-          return null;
-        }
-        return { name, mode: draft.mode, count };
-      }
-
-      if (draft.mode === "KASRAT") {
-        return { name, mode: "KASRAT", count: 0 };
-      }
-
-      return null;
-    }).filter(Boolean) as { name: string; mode: ZikrMode; count: number }[];
-
-    if (validEntries.length === 0) {
+    const total = builtIn.length + custom.length;
+    if (total === 0) {
       toast.error("No zikr to save", {
         description: "Please enter at least one zikr count.",
       });
@@ -113,33 +190,47 @@ export default function ZikrPage() {
     setPending("all");
 
     try {
-      const response = await fetch("/api/zikr", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          date,
-          entries: validEntries,
-        }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setEntries(data.entries || []);
-        toast.success("All zikr saved successfully!", {
-          description: `${validEntries.length} zikr recorded.`,
+      if (builtIn.length > 0) {
+        const response = await fetch("/api/zikr", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date, entries: builtIn }),
         });
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        toast.error("Failed to save zikr", {
-          description: errorData.error || "Please try again.",
-        });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Please try again.");
+        }
       }
-    } catch (error) {
-      toast.error("Failed to save zikr", {
-        description: "Please try again.",
+
+      for (const item of custom) {
+        const response = await fetch("/api/zikr", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ date, ...item }),
+        });
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || "Please try again.");
+        }
+      }
+
+      const refreshed = await fetch(`/api/zikr?date=${date}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .catch(() => null);
+      if (refreshed?.entries) setEntries(refreshed.entries);
+
+      toast.success("All zikr saved successfully!", {
+        description: `${total} zikr recorded.`,
       });
+    } catch (error) {
+      const message =
+        error instanceof Error && error.message !== "Failed to fetch"
+          ? error.message
+          : "Please try again.";
+      toast.error("Failed to save zikr", { description: message });
+    } finally {
+      setPending(null);
     }
-    setPending(null);
   }
 
   return (
@@ -206,63 +297,61 @@ export default function ZikrPage() {
       <div className={`space-y-4 ${loading ? "opacity-60" : ""}`}>
         {AZKAAR_TARGET_ITEMS.map(({ name }) => {
           const entry = entries.find((item) => item.name === name);
-          const draft = drafts[name] ?? initialDraft(entry);
-          const count = Number(draft.count);
-          const hasValidCount = draft.mode === "KASRAT" || (Number.isInteger(count) && count > 0);
-
           return (
-            <section key={name} className="rounded-xl border border-border bg-surface p-4 shadow-sm">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <h2 className="font-semibold text-base text-foreground">{name}</h2>
-                  <p className="mt-1 text-xs text-foreground/55">
-                    {entry?.mode === "KASRAT" ? "Kasrat se saved" : `Today's count: ${entry?.count ?? 0}`}
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${draft.mode === "COUNT" ? "border-primary-400 bg-primary-50" : "border-border hover:border-primary-100"}`}>
-                  <input
-                    type="radio"
-                    name={`mode-${name}`}
-                    checked={draft.mode === "COUNT"}
-                    onChange={() => updateDraft(name, { mode: "COUNT" })}
-                    className="h-4 w-4 accent-primary-500"
-                  />
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-medium text-foreground">Apna count</span>
-                    <span className="block text-xs text-foreground/55">How many times?</span>
-                  </span>
-                  <input
-                    type="number"
-                    min="1"
-                    inputMode="numeric"
-                    value={draft.mode === "COUNT" ? draft.count : ""}
-                    onChange={(event) => updateDraft(name, { count: event.target.value })}
-                    onClick={(event) => event.stopPropagation()}
-                    placeholder="0"
-                    className="w-16 rounded-lg border border-border bg-surface px-2 py-1.5 text-right text-sm font-semibold text-foreground outline-none focus:border-primary-400"
-                  />
-                </label>
-
-                <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${draft.mode === "KASRAT" ? "border-primary-400 bg-primary-50" : "border-border hover:border-primary-100"}`}>
-                  <input
-                    type="radio"
-                    name={`mode-${name}`}
-                    checked={draft.mode === "KASRAT"}
-                    onChange={() => updateDraft(name, { mode: "KASRAT" })}
-                    className="h-4 w-4 accent-primary-500"
-                  />
-                  <span>
-                    <span className="block text-sm font-medium text-foreground">Kasrat se</span>
-                    <span className="block text-xs text-foreground/55">More than 300</span>
-                  </span>
-                </label>
-              </div>
-            </section>
+            <ZikrCard
+              key={name}
+              id={name}
+              title={name}
+              entry={entry}
+              draft={drafts[name] ?? initialDraft(entry)}
+              onChange={(changes) => updateDraft(name, changes)}
+            />
           );
         })}
+
+        <div className="pt-4">
+          <h2 className="text-lg font-semibold text-foreground">My azkaar</h2>
+          <p className="mb-3 mt-1 text-sm text-foreground/60">
+            Add your own zikr to record alongside the daily azkaar.
+          </p>
+
+          <form onSubmit={addCustomZikr} className="mb-4 flex gap-2">
+            <input
+              type="text"
+              value={newName}
+              onChange={(event) => setNewName(event.target.value)}
+              maxLength={100}
+              placeholder="Name of your zikr"
+              aria-label="Name of your zikr"
+              className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+            />
+            <button
+              type="submit"
+              disabled={adding}
+              className="shrink-0 rounded-lg bg-primary-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {adding ? "Adding..." : "Add"}
+            </button>
+          </form>
+
+          <div className="space-y-4">
+            {customZikrs.map((custom) => {
+              const entry = entries.find((item) => item.name === custom.name);
+              const key = customKey(custom.id);
+              return (
+                <ZikrCard
+                  key={custom.id}
+                  id={key}
+                  title={custom.name}
+                  entry={entry}
+                  draft={drafts[key] ?? initialDraft(entry)}
+                  onChange={(changes) => updateDraft(key, changes)}
+                  onRemove={() => removeCustomZikr(custom)}
+                />
+              );
+            })}
+          </div>
+        </div>
 
         <div className="sticky bottom-[calc(4.75rem+env(safe-area-inset-bottom))] bg-surface/95 pb-4 pt-4 backdrop-blur sm:bottom-0">
           <button
@@ -283,5 +372,83 @@ export default function ZikrPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+function ZikrCard({
+  id,
+  title,
+  entry,
+  draft,
+  onChange,
+  onRemove,
+}: {
+  id: string;
+  title: string;
+  entry?: ZikrEntry;
+  draft: Draft;
+  onChange: (changes: Partial<Draft>) => void;
+  onRemove?: () => void;
+}) {
+  return (
+    <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="break-words text-base font-semibold text-foreground">{title}</h2>
+          <p className="mt-1 text-xs text-foreground/55">
+            {entry?.mode === "KASRAT" ? "Kasrat se saved" : `Today's count: ${entry?.count ?? 0}`}
+          </p>
+        </div>
+        {onRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-status-qaza hover:underline"
+          >
+            Remove
+          </button>
+        )}
+      </div>
+
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${draft.mode === "COUNT" ? "border-primary-400 bg-primary-50" : "border-border hover:border-primary-100"}`}>
+          <input
+            type="radio"
+            name={`mode-${id}`}
+            checked={draft.mode === "COUNT"}
+            onChange={() => onChange({ mode: "COUNT" })}
+            className="h-4 w-4 accent-primary-500"
+          />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-medium text-foreground">Apna count</span>
+            <span className="block text-xs text-foreground/55">How many times?</span>
+          </span>
+          <input
+            type="number"
+            min="0"
+            inputMode="numeric"
+            value={draft.mode === "COUNT" ? draft.count : ""}
+            onChange={(event) => onChange({ count: event.target.value })}
+            onClick={(event) => event.stopPropagation()}
+            placeholder="0"
+            className="w-16 rounded-lg border border-border bg-surface px-2 py-1.5 text-right text-sm font-semibold text-foreground outline-none focus:border-primary-400"
+          />
+        </label>
+
+        <label className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${draft.mode === "KASRAT" ? "border-primary-400 bg-primary-50" : "border-border hover:border-primary-100"}`}>
+          <input
+            type="radio"
+            name={`mode-${id}`}
+            checked={draft.mode === "KASRAT"}
+            onChange={() => onChange({ mode: "KASRAT" })}
+            className="h-4 w-4 accent-primary-500"
+          />
+          <span>
+            <span className="block text-sm font-medium text-foreground">Kasrat se</span>
+            <span className="block text-xs text-foreground/55">More than 300</span>
+          </span>
+        </label>
+      </div>
+    </section>
   );
 }
