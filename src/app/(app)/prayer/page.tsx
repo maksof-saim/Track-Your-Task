@@ -17,6 +17,13 @@ const STATUS_STYLES: Record<StatusKey, string> = {
   QAZA: "border-status-qaza bg-status-qaza/10 text-status-qaza",
 };
 
+function getJson(url: string) {
+  return fetch(url).then((res) => {
+    if (!res.ok) throw new Error("Request failed");
+    return res.json();
+  });
+}
+
 export default function PrayerPage() {
   const router = useRouter();
   const [date, setDate] = useState(todayISO());
@@ -38,40 +45,41 @@ export default function PrayerPage() {
 
   useEffect(() => {
     let cancelled = false;
+    setLoading(true);
 
-    // Fetch standard prayers
-    fetch(`/api/prayer?date=${date}`)
-      .then((res) => res.json())
-      .then((data) => {
+    Promise.all([
+      getJson(`/api/prayer?date=${date}`),
+      getJson("/api/custom/prayers"),
+      getJson(`/api/prayer?date=${date}&custom=true`),
+    ])
+      .then(([standard, customList, customLogs]) => {
         if (cancelled) return;
+
         const map: EntryMap = {};
-        for (const entry of data.entries ?? []) {
+        for (const entry of standard.entries ?? []) {
           map[entry.prayer as PrayerKey] = entry.status as StatusKey;
         }
+
+        const customMap: CustomEntryMap = {};
+        for (const entry of customLogs.customEntries ?? []) {
+          customMap[entry.customPrayerId] = entry.status as StatusKey;
+        }
+
         setEntries(map);
+        setCustomPrayers(customList.customPrayers ?? []);
+        setCustomEntries(customMap);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Clear the old date's values so they cannot be saved under the new date by mistake.
+        setEntries({});
+        setCustomEntries({});
+        toast.error("Could not load your prayer record", {
+          description: "Please check your internet connection and refresh the page.",
+        });
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
-      });
-
-    // Fetch custom prayers
-    fetch("/api/custom/prayers")
-      .then((res) => res.json())
-      .then((data) => {
-        if (cancelled) return;
-        setCustomPrayers(data.customPrayers ?? []);
-      });
-
-    // Fetch custom prayer logs for the date
-    fetch(`/api/prayer?date=${date}&custom=true`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (cancelled) return;
-        const map: CustomEntryMap = {};
-        for (const entry of data.customEntries ?? []) {
-          map[entry.customPrayerId] = entry.status as StatusKey;
-        }
-        setCustomEntries(map);
       });
 
     return () => {
@@ -93,9 +101,35 @@ export default function PrayerPage() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name }),
     });
-    if (!res.ok) throw new Error("Failed to add custom prayer");
-    const data = await res.json();
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || "Failed to add custom prayer");
     setCustomPrayers((prev) => [...prev, data]);
+  }
+
+  async function removeCustomPrayer(prayer: CustomPrayer) {
+    const confirmed = window.confirm(
+      `Remove "${prayer.name}"? Its saved records will also be deleted.`,
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/custom/prayers/${prayer.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        toast.error("Could not remove prayer", { description: "Please try again." });
+        return;
+      }
+      setCustomPrayers((prev) => prev.filter((item) => item.id !== prayer.id));
+      setCustomEntries((prev) => {
+        const next = { ...prev };
+        delete next[prayer.id];
+        return next;
+      });
+      toast.success("Prayer removed");
+    } catch {
+      toast.error("Could not remove prayer", {
+        description: "Please check your internet connection and try again.",
+      });
+    }
   }
 
   async function handleSave() {
@@ -111,40 +145,59 @@ export default function PrayerPage() {
 
     setSaving(true);
 
-    // Save standard prayers
-    const standardPromise = filled.length > 0 ? fetch("/api/prayer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        date,
-        entries: filled.map((p) => ({ prayer: p.key, status: entries[p.key] })),
-      }),
-    }) : Promise.resolve({ ok: true } as Response);
+    try {
+      const requests: Promise<Response>[] = [];
 
-    // Save custom prayers
-    const customPromise = customFilled.length > 0 ? fetch("/api/prayer", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        date,
-        customEntries: customFilled.map((p) => ({ customPrayerId: p.id, status: customEntries[p.id] })),
-      }),
-    }) : Promise.resolve({ ok: true } as Response);
+      if (filled.length > 0) {
+        requests.push(
+          fetch("/api/prayer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              date,
+              entries: filled.map((p) => ({ prayer: p.key, status: entries[p.key] })),
+            }),
+          }),
+        );
+      }
 
-    const [standardRes, customRes] = await Promise.all([standardPromise, customPromise]);
-    setSaving(false);
+      if (customFilled.length > 0) {
+        requests.push(
+          fetch("/api/prayer", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              date,
+              customEntries: customFilled.map((p) => ({
+                customPrayerId: p.id,
+                status: customEntries[p.id],
+              })),
+            }),
+          }),
+        );
+      }
 
-    if (standardRes.ok && customRes.ok) {
+      const responses = await Promise.all(requests);
+      const failed = responses.find((res) => !res.ok);
+
+      if (failed) {
+        const data = await failed.json().catch(() => ({}));
+        toast.error("Failed to save prayer record", {
+          description: data.error || "Please try again.",
+        });
+        return;
+      }
+
       toast.success("Prayer record saved successfully!", {
         description: "Your prayer status has been recorded.",
       });
       setTimeout(() => router.push("/dashboard"), 1500);
-    } else {
-      const errorRes = !standardRes.ok ? standardRes : customRes;
-      const data = await errorRes.json().catch(() => ({}));
+    } catch {
       toast.error("Failed to save prayer record", {
-        description: data.error || "Please try again.",
+        description: "Please check your internet connection and try again.",
       });
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -254,7 +307,16 @@ export default function PrayerPage() {
                 key={prayer.id}
                 className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between"
               >
-                <span className="text-base font-medium text-foreground">{prayer.name}</span>
+                <div className="flex min-w-0 items-center justify-between gap-3 sm:justify-start">
+                  <span className="break-words text-base font-medium text-foreground">{prayer.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => removeCustomPrayer(prayer)}
+                    className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-status-qaza hover:underline"
+                  >
+                    Remove
+                  </button>
+                </div>
                 <div className="grid grid-cols-3 gap-2">
                   {STATUSES.map((status) => {
                     const active = customEntries[prayer.id] === status.key;
@@ -281,7 +343,6 @@ export default function PrayerPage() {
       )}
 
       {/* Add Custom Prayer */}
-
       <div className="mt-6">
         <AddCustomItem
           type="prayer"

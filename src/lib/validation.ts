@@ -108,3 +108,17 @@ export const bulkZikrLogSchema = z.object({
     .min(1)
     .max(50),
 });
+
+export const customChecklistLogSchema = z.object({
+  date: isoDateSchema,
+  section: z.enum(CHECKLIST_SECTIONS),
+  customItems: z
+    .array(
+      z.object({
+        customId: z.string().trim().min(1).max(100),
+        done: z.boolean(),
+      }),
+    )
+    .min(1, "At least one item is required")
+    .max(50),
+});

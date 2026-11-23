@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { checklistLogSchema, CHECKLIST_SECTIONS } from "@/lib/validation";
+import {
+  checklistLogSchema,
+  customChecklistLogSchema,
+  CHECKLIST_SECTIONS,
+} from "@/lib/validation";
 import { isFutureInEveryTimezone } from "@/lib/dateUtils";
 
 export async function GET(request: Request) {
@@ -40,6 +44,85 @@ export async function POST(request: Request) {
   }
 
   const body = await request.json().catch(() => null);
+
+  // Handle custom tilawat / hifazat items
+  if (body && typeof body === "object" && "customItems" in body) {
+    const parsedCustom = customChecklistLogSchema.safeParse(body);
+    if (!parsedCustom.success) {
+      return NextResponse.json(
+        { error: parsedCustom.error.issues[0]?.message ?? "Invalid data" },
+        { status: 400 },
+      );
+    }
+
+    const { date, section, customItems } = parsedCustom.data;
+
+    if (isFutureInEveryTimezone(date)) {
+      return NextResponse.json(
+        { error: "Cannot save records for future dates" },
+        { status: 400 },
+      );
+    }
+
+    // Every custom item must belong to the signed-in user.
+    const ids = [...new Set(customItems.map((entry) => entry.customId))];
+    const ownedCount =
+      section === "TILAWAT"
+        ? await prisma.customTilawat.count({ where: { id: { in: ids }, userId: session.user.id } })
+        : await prisma.customHifazat.count({ where: { id: { in: ids }, userId: session.user.id } });
+    if (ownedCount !== ids.length) {
+      return NextResponse.json({ error: "Unknown custom item" }, { status: 400 });
+    }
+
+    const dateValue = new Date(`${date}T00:00:00.000Z`);
+
+    await prisma.$transaction(
+      customItems.map((entry) =>
+        section === "TILAWAT"
+          ? prisma.checklistLog.upsert({
+            where: {
+              userId_date_section_customTilawatId: {
+                userId: session.user.id,
+                date: dateValue,
+                section,
+                customTilawatId: entry.customId,
+              },
+            },
+            update: { done: entry.done },
+            create: {
+              userId: session.user.id,
+              date: dateValue,
+              section,
+              item: `custom:${entry.customId}`,
+              customTilawatId: entry.customId,
+              done: entry.done,
+            },
+          })
+          : prisma.checklistLog.upsert({
+            where: {
+              userId_date_section_customHifazatId: {
+                userId: session.user.id,
+                date: dateValue,
+                section,
+                customHifazatId: entry.customId,
+              },
+            },
+            update: { done: entry.done },
+            create: {
+              userId: session.user.id,
+              date: dateValue,
+              section,
+              item: `custom:${entry.customId}`,
+              customHifazatId: entry.customId,
+              done: entry.done,
+            },
+          }),
+      ),
+    );
+
+    return NextResponse.json({ ok: true });
+  }
+
   const parsed = checklistLogSchema.safeParse(body);
   if (!parsed.success) {
     return NextResponse.json(

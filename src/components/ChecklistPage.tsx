@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { todayISO, formatDisplayDate } from "@/lib/prayerMeta";
 import { isFriday } from "@/lib/checklistMeta";
-import AddCustomItem from "@/components/AddCustomItem";
 import { isFutureDate, getPreviousDay, getNextDay } from "@/lib/dateUtils";
 
 type ChecklistItemDef = {
@@ -14,6 +13,32 @@ type ChecklistItemDef = {
   fridayOnly?: boolean;
   hint?: string;
 };
+
+type CustomItem = { id: string; name: string; hint?: string | null };
+
+const CUSTOM_CONFIG = {
+  TILAWAT: {
+    path: "/api/custom/tilawats",
+    listKey: "customTilawats",
+    heading: "My tilawat",
+    placeholder: "Name of your tilawat",
+  },
+  HIFAZAT: {
+    path: "/api/custom/hifazats",
+    listKey: "customHifazats",
+    heading: "My hifazat",
+    placeholder: "Name of your hifazat item",
+  },
+} as const;
+
+const customKey = (id: string) => `custom:${id}`;
+
+function getJson(url: string) {
+  return fetch(url).then((res) => {
+    if (!res.ok) throw new Error("Request failed");
+    return res.json();
+  });
+}
 
 export default function ChecklistPage({
   title,
@@ -27,10 +52,15 @@ export default function ChecklistPage({
   items: readonly ChecklistItemDef[];
 }) {
   const router = useRouter();
+  const config = CUSTOM_CONFIG[section];
   const [date, setDate] = useState(todayISO());
   const [done, setDone] = useState<Record<string, boolean>>({});
+  const [customItems, setCustomItems] = useState<CustomItem[]>([]);
+  const [hasRecord, setHasRecord] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [newName, setNewName] = useState("");
+  const [adding, setAdding] = useState(false);
 
   function handleDateChange(newDate: string) {
     if (isFutureDate(newDate)) {
@@ -44,19 +74,45 @@ export default function ChecklistPage({
 
   useEffect(() => {
     let cancelled = false;
-    fetch(`/api/checklist?date=${date}&section=${section}`)
-      .then((res) => res.json())
-      .then((data) => {
+    setLoading(true);
+    const { path, listKey } = CUSTOM_CONFIG[section];
+
+    Promise.all([
+      getJson(`/api/checklist?date=${date}&section=${section}`),
+      getJson(path),
+    ])
+      .then(([checklist, customData]) => {
         if (cancelled) return;
+
+        const saved: { item: string; done: boolean }[] = checklist.items ?? [];
         const map: Record<string, boolean> = {};
-        for (const entry of data.items ?? []) {
+        for (const entry of saved) {
           map[entry.item] = entry.done;
         }
+
         setDone(map);
+        setHasRecord(saved.length > 0);
+        setCustomItems(
+          (customData[listKey] ?? []).map((item: { id: string; name: string; hint?: string | null }) => ({
+            id: item.id,
+            name: item.name,
+            hint: item.hint,
+          })),
+        );
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // Clear the old date's values so they cannot be saved under the new date by mistake.
+        setDone({});
+        setHasRecord(false);
+        toast.error("Could not load your record", {
+          description: "Please check your internet connection and refresh the page.",
+        });
       })
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
+
     return () => {
       cancelled = true;
     };
@@ -66,10 +122,75 @@ export default function ChecklistPage({
     setDone((prev) => ({ ...prev, [key]: !prev[key] }));
   }
 
+  async function addCustomItem(event: FormEvent) {
+    event.preventDefault();
+    const name = newName.trim();
+    if (!name) {
+      toast.error("Please enter a name");
+      return;
+    }
+
+    setAdding(true);
+    try {
+      const res = await fetch(config.path, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        toast.error("Could not add item", { description: data.error || "Please try again." });
+        return;
+      }
+
+      setCustomItems((prev) => [...prev, { id: data.id, name: data.name, hint: data.hint }]);
+      setNewName("");
+      toast.success("Item added", { description: data.name });
+    } catch {
+      toast.error("Could not add item", {
+        description: "Please check your internet connection and try again.",
+      });
+    } finally {
+      setAdding(false);
+    }
+  }
+
+  async function removeCustomItem(item: CustomItem) {
+    const confirmed = window.confirm(
+      `Remove "${item.name}"? Its saved records will also be deleted.`,
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`${config.path}/${item.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        toast.error("Could not remove item", { description: "Please try again." });
+        return;
+      }
+
+      setCustomItems((prev) => prev.filter((entry) => entry.id !== item.id));
+      setDone((prev) => {
+        const next = { ...prev };
+        delete next[customKey(item.id)];
+        return next;
+      });
+      toast.success("Item removed");
+    } catch {
+      toast.error("Could not remove item", {
+        description: "Please check your internet connection and try again.",
+      });
+    }
+  }
+
   async function handleSave() {
-    // Client-side validation
-    const checkedCount = items.filter((i) => done[i.key]).length;
-    if (checkedCount === 0) {
+    const checkedCount =
+      items.filter((i) => done[i.key]).length +
+      customItems.filter((c) => done[customKey(c.id)]).length;
+
+    // A first save needs at least one item. If a record already exists, saving with
+    // everything unchecked is allowed, so a mistake can be corrected.
+    if (checkedCount === 0 && !hasRecord) {
       toast.error("Please select at least one item", {
         description: `Mark at least one ${section.toLowerCase()} item as done.`,
       });
@@ -77,32 +198,67 @@ export default function ChecklistPage({
     }
 
     setSaving(true);
-    const res = await fetch("/api/checklist", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        date,
-        section,
-        items: items.map((i) => ({ item: i.key, done: Boolean(done[i.key]) })),
-      }),
-    });
-    setSaving(false);
 
-    if (res.ok) {
+    try {
+      const requests: Promise<Response>[] = [
+        fetch("/api/checklist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            date,
+            section,
+            items: items.map((i) => ({ item: i.key, done: Boolean(done[i.key]) })),
+          }),
+        }),
+      ];
+
+      if (customItems.length > 0) {
+        requests.push(
+          fetch("/api/checklist", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              date,
+              section,
+              customItems: customItems.map((c) => ({
+                customId: c.id,
+                done: Boolean(done[customKey(c.id)]),
+              })),
+            }),
+          }),
+        );
+      }
+
+      const responses = await Promise.all(requests);
+      const failed = responses.find((res) => !res.ok);
+
+      if (failed) {
+        const data = await failed.json().catch(() => ({}));
+        toast.error("Failed to save record", {
+          description: data.error || "Please try again.",
+        });
+        return;
+      }
+
       toast.success(`${title} saved successfully!`, {
         description: "Your record has been updated.",
       });
       setTimeout(() => router.push("/dashboard"), 1500);
-    } else {
-      const data = await res.json().catch(() => ({}));
+    } catch {
       toast.error("Failed to save record", {
-        description: data.error || "Please try again.",
+        description: "Please check your internet connection and try again.",
       });
+    } finally {
+      setSaving(false);
     }
   }
 
-  const doneCount = items.filter((i) => done[i.key]).length;
   const friday = isFriday(date);
+  const activeItems = items.filter((i) => !(i.fridayOnly && !friday));
+  const doneCount =
+    activeItems.filter((i) => done[i.key]).length +
+    customItems.filter((c) => done[customKey(c.id)]).length;
+  const totalCount = activeItems.length + customItems.length;
 
   return (
     <div className="mx-auto max-w-2xl">
@@ -163,7 +319,7 @@ export default function ChecklistPage({
       </div>
 
       <div className="mb-4 flex items-center justify-between rounded-xl border border-border bg-surface-muted px-4 py-2.5 text-sm text-foreground/70">
-        <span>{doneCount}/{items.length} completed</span>
+        <span>{doneCount}/{totalCount} completed</span>
       </div>
 
       <div className={`flex flex-col gap-2 ${loading ? "opacity-50" : ""}`}>
@@ -194,6 +350,61 @@ export default function ChecklistPage({
             </label>
           );
         })}
+      </div>
+
+      <div className="mt-8">
+        <h2 className="text-lg font-semibold text-foreground">{config.heading}</h2>
+        <p className="mb-3 mt-1 text-sm text-foreground/60">
+          Add your own items to record alongside the daily list.
+        </p>
+
+        <form onSubmit={addCustomItem} className="mb-4 flex gap-2">
+          <input
+            type="text"
+            value={newName}
+            onChange={(event) => setNewName(event.target.value)}
+            maxLength={100}
+            placeholder={config.placeholder}
+            aria-label={config.placeholder}
+            className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+          />
+          <button
+            type="submit"
+            disabled={adding}
+            className="shrink-0 rounded-lg bg-primary-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {adding ? "Adding..." : "Add"}
+          </button>
+        </form>
+
+        <div className={`flex flex-col gap-2 ${loading ? "opacity-50" : ""}`}>
+          {customItems.map((item) => (
+            <div
+              key={item.id}
+              className="flex items-center gap-2 rounded-xl border border-border bg-surface p-4"
+            >
+              <label className="flex min-w-0 flex-1 cursor-pointer items-center justify-between gap-3">
+                <span className="min-w-0">
+                  <span className="break-words font-medium text-foreground">{item.name}</span>
+                  {item.hint && <p className="text-xs text-foreground/50">{item.hint}</p>}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={Boolean(done[customKey(item.id)])}
+                  onChange={() => toggle(customKey(item.id))}
+                  className="h-5 w-5 shrink-0 rounded border-border text-primary-500 focus:ring-primary-300"
+                />
+              </label>
+              <button
+                type="button"
+                onClick={() => removeCustomItem(item)}
+                className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-status-qaza hover:underline"
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="mt-6">
