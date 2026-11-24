@@ -162,7 +162,31 @@ export default function LandingPage() {
                         </ol>
                     </div>
                 </section>
-
+                <section className="mx-auto max-w-5xl px-4 pb-12 sm:px-6 sm:pb-16">
+                    <h2 className="mb-6 text-balance text-center text-xl font-bold text-[#084538] sm:mb-8 sm:text-2xl">
+                        Useful tools, no account needed
+                    </h2>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                        <Link
+                            href="/tools/tasbeeh"
+                            className={`rounded-xl border border-[#e3dcc8] bg-white p-5 hover:border-[#b8963e] sm:p-6 ${focusRing}`}
+                        >
+                            <h3 className="mb-1 text-lg font-bold text-[#0b5d4b]">Online Tasbeeh Counter</h3>
+                            <p className="text-base leading-7 text-[#4a5a55]">
+                                Count your dhikr with one tap and keep your progress on your device.
+                            </p>
+                        </Link>
+                        <Link
+                            href="/tools/qaza-calculator"
+                            className={`rounded-xl border border-[#e3dcc8] bg-white p-5 hover:border-[#b8963e] sm:p-6 ${focusRing}`}
+                        >
+                            <h3 className="mb-1 text-lg font-bold text-[#0b5d4b]">Qaza Prayer Calculator</h3>
+                            <p className="text-base leading-7 text-[#4a5a55]">
+                                Estimate your missed prayers and plan how to make them up.
+                            </p>
+                        </Link>
+                    </div>
+                </section>
                 <section className="mx-auto max-w-3xl px-5 py-12 text-center sm:px-6 sm:py-16">
                     <h2 className="text-balance text-xl font-bold text-[#084538] sm:text-2xl">
                         Start tracking your amaal today
@@ -194,6 +218,9 @@ export default function LandingPage() {
                     </Link>
                     <Link href="/terms" className={`inline-flex min-h-11 items-center rounded-md hover:text-white ${focusRing}`}>
                         Terms of Use
+                    </Link>
+                    <Link href="/tools" className={`inline-flex min-h-11 items-center rounded-md hover:text-white ${focusRing}`}>
+                        Tools
                     </Link>
                 </nav>
                 <p className="mt-3 text-xs opacity-80">&copy; {new Date().getFullYear()} Track Your Amaal</p>
