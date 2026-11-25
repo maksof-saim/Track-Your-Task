@@ -19,7 +19,7 @@ export default function AppShell({
         <Header userName={userName} />
         <div className="flex flex-1">
           <Sidebar isAdmin={isAdmin} />
-          <main className="min-w-0 flex-1 px-4 pb-[calc(5rem+env(safe-area-inset-bottom))] pt-6 sm:px-6 sm:py-6">{children}</main>
+          <main className="min-w-0 flex-1 px-4 py-6 sm:px-6">{children}</main>
         </div>
         <Footer />
       </div>
