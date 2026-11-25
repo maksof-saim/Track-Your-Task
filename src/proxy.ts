@@ -6,12 +6,15 @@ const { auth } = NextAuth(authConfig);
 
 const AUTH_PAGES = ["/login", "/register", "/forgot-password", "/reset-password"];
 const PUBLIC_PAGES = ["/", "/privacy", "/terms"];
+const PUBLIC_PREFIXES = ["/tools"];
 
 export default auth((req) => {
   const { pathname, search } = req.nextUrl;
   const isLoggedIn = !!req.auth;
   const isAuthPage = AUTH_PAGES.includes(pathname);
-  const isPublicPage = PUBLIC_PAGES.includes(pathname);
+  const isPublicPage =
+    PUBLIC_PAGES.includes(pathname) ||
+    PUBLIC_PREFIXES.some((prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`));
 
   if (isLoggedIn && (isAuthPage || pathname === "/")) {
     return NextResponse.redirect(new URL("/dashboard", req.nextUrl.origin));
