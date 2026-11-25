@@ -84,8 +84,9 @@ export default function PrivacyPage() {
 
             <LegalSection title="6. Retention and deletion">
                 <p>
-                    We keep your account and records for as long as your account exists. You can ask us to
-                    delete your account and all associated records at any time by emailing{" "}
+                    We keep your account and records for as long as your account exists. You can delete your
+                    account and all associated records at any time from the Account page after you sign in.
+                    You can also ask us to do it by emailing{" "}
                     <a className="font-medium text-[#0b5d4b] underline" href={`mailto:${CONTACT_EMAIL}`}>
                         {CONTACT_EMAIL}
                     </a>
@@ -103,8 +104,8 @@ export default function PrivacyPage() {
 
             <LegalSection title="8. Your choices">
                 <p>
-                    You can ask us for a copy of your information, ask us to correct it, or ask us to delete
-                    it, by emailing{" "}
+                    You can download a copy of your records from the Account page. You can also ask us to
+                    correct or delete your information by emailing{" "}
                     <a className="font-medium text-[#0b5d4b] underline" href={`mailto:${CONTACT_EMAIL}`}>
                         {CONTACT_EMAIL}
                     </a>
