@@ -25,7 +25,7 @@ const NAV_ITEMS = [
 export default function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
   const pathname = usePathname();
   const { isOpen, close } = useSidebar();
-  const { t } = useI18n();
+  const { t, dir } = useI18n();
   const items = isAdmin
     ? [...NAV_ITEMS, { href: "/admin", labelKey: "admin", icon: UsersIcon } as const]
     : NAV_ITEMS;
@@ -44,7 +44,7 @@ export default function Sidebar({ isAdmin = false }: { isAdmin?: boolean }) {
         aria-label={t.nav.mainAria}
         className={`fixed inset-y-0 start-0 z-40 flex w-60 max-w-[70vw] flex-col gap-0.5 border-e border-border bg-surface px-2.5 py-4 shadow-xl transition-transform duration-200 ease-out
           sm:static sm:z-auto sm:w-52 sm:max-w-none sm:translate-x-0 sm:shadow-none sm:py-4 sm:gap-1
-          ${isOpen ? "translate-x-0" : "-translate-x-full rtl:translate-x-full"}`}
+          ${isOpen ? "translate-x-0" : dir === "rtl" ? "translate-x-full" : "-translate-x-full"}`}
       >
         <div className="mb-2 flex items-center justify-between px-1 sm:hidden">
           <span className="flex items-center gap-2 font-semibold text-foreground">

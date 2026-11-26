@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { PRAYERS, formatDisplayDate, getPrayerLabel, todayISO } from "@/lib/prayerMeta";
 import { ChartIcon, PrayerIcon, TasbihIcon, BookIcon, ShieldIcon } from "@/components/icons";
+import { useI18n } from "@/lib/i18n/client";
 
 type Analytics = {
   grid: { date: string; statuses: Record<string, string | null> }[];
@@ -46,12 +47,13 @@ function currentStreak(grid: Analytics["grid"]): number {
   return streak;
 }
 
-function streakLabel(grid: Analytics["grid"]): string {
+function streakLabel(grid: Analytics["grid"], days: string): string {
   const streak = currentStreak(grid);
-  return `${streak}${streak >= grid.length ? "+" : ""} din`;
+  return `${streak}${streak >= grid.length ? "+" : ""} ${days}`;
 }
 
 export default function DashboardPage() {
+  const { t } = useI18n();
   const [data, setData] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -75,14 +77,14 @@ export default function DashboardPage() {
   return (
     <div className="mx-auto max-w-4xl">
       <div className="mb-6">
-        <h1 className="text-xl font-semibold text-foreground">Analytics</h1>
-        <p className="text-sm text-foreground/60">Your worship summary</p>
+        <h1 className="text-xl font-semibold text-foreground">{t.dashboard.title}</h1>
+        <p className="text-sm text-foreground/60">{t.dashboard.subtitle}</p>
       </div>
 
       <div className={`mb-6 grid grid-cols-2 gap-3 sm:grid-cols-3 ${loading ? "opacity-50" : ""}`}>
         <StatCard
           icon={<PrayerIcon className="h-5 w-5" />}
-          label={loading ? "..." : "Aaj ki Namaz"}
+          label={loading ? "..." : t.dashboard.todayPrayers}
           value={data ? `${data.todayLoggedCount}/${data.totalPrayers}` : "—"}
           href="/prayer"
 
@@ -90,63 +92,63 @@ export default function DashboardPage() {
         <StatCard
           href="/zikr"
           icon={<TasbihIcon className="h-5 w-5" />}
-          label={loading ? "..." : "Aaj ka Zikr"}
+          label={loading ? "..." : t.dashboard.todayZikr}
           value={
             data
-              ? `${data.zikrToday}${data.zikrKasratToday ? ` + ${data.zikrKasratToday} kasrat` : ""}`
+              ? `${data.zikrToday}${data.zikrKasratToday ? ` + ${data.zikrKasratToday} ${t.dashboard.kasrat}` : ""}`
               : "—"
           }
         />
         <StatCard
           href="/tilawat"
           icon={<BookIcon className="h-5 w-5" />}
-          label={loading ? "..." : "Aaj ki Tilawat"}
+          label={loading ? "..." : t.dashboard.todayTilawat}
           value={data ? `${data.tilawatToday}/${data.tilawatTarget}` : "—"}
         />
         <StatCard
           href="/hifazat"
           icon={<ShieldIcon className="h-5 w-5" />}
-          label={loading ? "..." : "Aaj ki Hifazat"}
+          label={loading ? "..." : t.dashboard.todayHifazat}
           value={data ? `${data.hifazatToday}/${data.hifazatTarget}` : "—"}
           accent="gold"
         />
         <StatCard
           icon={<ChartIcon className="h-5 w-5" />}
-          label={loading ? "..." : "Namaz Streak"}
-          value={data ? streakLabel(data.grid) : "—"}
+          label={loading ? "..." : t.dashboard.streak}
+          value={data ? streakLabel(data.grid, t.dashboard.days) : "—"}
         />
       </div>
 
       <div className={`mb-6 grid gap-3 sm:grid-cols-2 ${loading ? "opacity-50" : ""}`}>
         <QuickLink
           href="/prayer"
-          title="Record today's prayers"
-          subtitle="Update your five daily prayers"
+          title={t.dashboard.quick.prayersTitle}
+          subtitle={t.dashboard.quick.prayersSubtitle}
           icon={<PrayerIcon className="h-5 w-5" />}
         />
         <QuickLink
           href="/zikr"
-          title="Open Azkaar"
-          subtitle="Add today's zikr"
+          title={t.dashboard.quick.zikrTitle}
+          subtitle={t.dashboard.quick.zikrSubtitle}
           icon={<TasbihIcon className="h-5 w-5" />}
         />
         <QuickLink
           href="/tilawat"
-          title="Record Tilawat"
-          subtitle="Track Quran recitation and memorized surahs"
+          title={t.dashboard.quick.tilawatTitle}
+          subtitle={t.dashboard.quick.tilawatSubtitle}
           icon={<BookIcon className="h-5 w-5" />}
         />
         <QuickLink
           href="/hifazat"
-          title="Hifazat Review"
-          subtitle="Track protection of eyes, ears, and tongue"
+          title={t.dashboard.quick.hifazatTitle}
+          subtitle={t.dashboard.quick.hifazatSubtitle}
           icon={<ShieldIcon className="h-5 w-5" />}
         />
       </div>
 
       <div className="rounded-xl border border-border bg-surface p-4 sm:p-5">
         <div className="mb-4 flex flex-wrap items-center justify-between gap-x-3 gap-y-2">
-          <p className="font-medium text-foreground">Last 14 days</p>
+          <p className="font-medium text-foreground">{t.dashboard.last14Days}</p>
           <Legend />
         </div>
 
@@ -180,7 +182,7 @@ export default function DashboardPage() {
                     return (
                       <span
                         key={day.date}
-                        title={`${dayLabel} · ${formatDisplayDate(day.date)} · ${status ?? "Record nahi"}`}
+                        title={`${dayLabel} · ${formatDisplayDate(day.date)} · ${status ?? t.dashboard.noRecord}`}
                         className={`h-5 rounded-sm ${status ? CELL_STYLES[status] : "bg-status-empty"}`}
                       />
                     );
@@ -200,7 +202,7 @@ export default function DashboardPage() {
                     return (
                       <span
                         key={day.date}
-                        title={`${custom.name} · ${formatDisplayDate(day.date)} · ${status ?? "Record nahi"}`}
+                        title={`${custom.name} · ${formatDisplayDate(day.date)} · ${status ?? t.dashboard.noRecord}`}
                         className={`h-5 rounded-sm ${status ? CELL_STYLES[status] ?? "bg-status-jamaat" : "bg-status-empty"}`}
                       />
                     );
@@ -289,12 +291,13 @@ function QuickLink({
 }
 
 function Legend() {
+  const { t } = useI18n();
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-foreground/50">
-      <LegendItem colorClass="bg-status-jamaat" label="Jamaat" />
-      <LegendItem colorClass="bg-status-infradi" label="Infradi" />
-      <LegendItem colorClass="bg-status-qaza" label="Qaza" />
-      <LegendItem colorClass="bg-status-empty" label="Khali" />
+      <LegendItem colorClass="bg-status-jamaat" label={t.dashboard.legend.jamaat} />
+      <LegendItem colorClass="bg-status-infradi" label={t.dashboard.legend.infradi} />
+      <LegendItem colorClass="bg-status-qaza" label={t.dashboard.legend.qaza} />
+      <LegendItem colorClass="bg-status-empty" label={t.dashboard.legend.empty} />
     </div>
   );
 }
