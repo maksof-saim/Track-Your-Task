@@ -1,6 +1,10 @@
 import Link from "next/link";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { getLocale } from "@/lib/i18n/server";
 
-export default function Footer() {
+export default async function Footer() {
+  const t = getDictionary(await getLocale());
+
   return (
     <footer className="border-t border-border bg-primary-700 text-white/80">
       <div className="arabesque-divider h-1 w-full opacity-40" />
@@ -8,13 +12,13 @@ export default function Footer() {
         <span>© {new Date().getFullYear()} Track Your Amaal — Amaal Tracker</span>
         <nav aria-label="Legal" className="flex items-center gap-4">
           <Link href="/settings" className="inline-flex min-h-10 items-center hover:text-white hover:underline">
-            Account
+            {t.footer.account}
           </Link>
           <Link href="/privacy" className="inline-flex min-h-10 items-center hover:text-white hover:underline">
-            Privacy Policy
+            {t.footer.privacy}
           </Link>
           <Link href="/terms" className="inline-flex min-h-10 items-center hover:text-white hover:underline">
-            Terms of Use
+            {t.footer.terms}
           </Link>
         </nav>
         <span className="text-gold-500">
