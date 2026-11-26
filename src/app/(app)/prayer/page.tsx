@@ -132,6 +132,42 @@ export default function PrayerPage() {
     }
   }
 
+  async function clearEntry(body: { prayer?: PrayerKey; customPrayerId?: string }) {
+    try {
+      const res = await fetch("/api/prayer", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date, ...body }),
+      });
+      if (!res.ok) {
+        toast.error("Could not clear record", { description: "Please try again." });
+        return;
+      }
+
+      if (body.prayer) {
+        const key = body.prayer;
+        setEntries((prev) => {
+          const next = { ...prev };
+          delete next[key];
+          return next;
+        });
+      }
+      if (body.customPrayerId) {
+        const id = body.customPrayerId;
+        setCustomEntries((prev) => {
+          const next = { ...prev };
+          delete next[id];
+          return next;
+        });
+      }
+      toast.success("Record cleared");
+    } catch {
+      toast.error("Could not clear record", {
+        description: "Please check your internet connection and try again.",
+      });
+    }
+  }
+
   async function handleSave() {
     const filled = PRAYERS.filter((p) => entries[p.key]);
     const customFilled = customPrayers.filter((p) => customEntries[p.id]);
@@ -293,6 +329,15 @@ export default function PrayerPage() {
                 );
               })}
             </div>
+            {entries[prayer.key] && (
+              <button
+                type="button"
+                onClick={() => clearEntry({ prayer: prayer.key })}
+                className="self-start rounded-lg px-2 py-1 text-xs font-medium text-foreground/50 hover:text-status-qaza hover:underline sm:self-auto"
+              >
+                Clear
+              </button>
+            )}
           </div>
         ))}
       </div>
@@ -309,6 +354,15 @@ export default function PrayerPage() {
               >
                 <div className="flex min-w-0 items-center justify-between gap-3 sm:justify-start">
                   <span className="break-words text-base font-medium text-foreground">{prayer.name}</span>
+                  {customEntries[prayer.id] && (
+                    <button
+                      type="button"
+                      onClick={() => clearEntry({ customPrayerId: prayer.id })}
+                      className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-foreground/50 hover:text-status-qaza hover:underline"
+                    >
+                      Clear
+                    </button>
+                  )}
                   <button
                     type="button"
                     onClick={() => removeCustomPrayer(prayer)}

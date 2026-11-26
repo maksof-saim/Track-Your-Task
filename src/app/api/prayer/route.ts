@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { prayerLogSchema, customPrayerLogSchema } from "@/lib/validation";
+import { prayerLogSchema, customPrayerLogSchema, prayerDeleteSchema } from "@/lib/validation";
 import { isFutureInEveryTimezone } from "@/lib/dateUtils";
 
 export async function GET(request: Request) {
@@ -154,4 +154,34 @@ export async function POST(request: Request) {
   );
 
   return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const parsed = prayerDeleteSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Invalid data" },
+      { status: 400 },
+    );
+  }
+
+  const { date, prayer, customPrayerId } = parsed.data;
+  const dateValue = new Date(`${date}T00:00:00.000Z`);
+
+  const where = prayer
+    ? { userId: session.user.id, date: dateValue, prayer }
+    : customPrayerId
+      ? { userId: session.user.id, date: dateValue, customPrayerId }
+      : null;
+  if (!where) {
+    return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+  }
+
+  const result = await prisma.prayerLog.deleteMany({ where });
+  return NextResponse.json({ ok: true, deleted: result.count });
 }

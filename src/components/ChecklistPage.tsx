@@ -183,6 +183,32 @@ export default function ChecklistPage({
     }
   }
 
+  async function clearRecord() {
+    const confirmed = window.confirm(
+      "Clear the saved record for this day? Your checklist will be empty.",
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch("/api/checklist", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date, section, clearAll: true }),
+      });
+      if (!res.ok) {
+        toast.error("Could not clear record", { description: "Please try again." });
+        return;
+      }
+      setDone({});
+      setHasRecord(false);
+      toast.success("Record cleared");
+    } catch {
+      toast.error("Could not clear record", {
+        description: "Please check your internet connection and try again.",
+      });
+    }
+  }
+
   async function handleSave() {
     const checkedCount =
       items.filter((i) => done[i.key]).length +
@@ -318,8 +344,17 @@ export default function ChecklistPage({
         </div>
       </div>
 
-      <div className="mb-4 flex items-center justify-between rounded-xl border border-border bg-surface-muted px-4 py-2.5 text-sm text-foreground/70">
+      <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-muted px-4 py-2.5 text-sm text-foreground/70">
         <span>{doneCount}/{totalCount} completed</span>
+        {hasRecord && (
+          <button
+            type="button"
+            onClick={clearRecord}
+            className="text-xs font-medium text-foreground/50 hover:text-status-qaza hover:underline"
+          >
+            Clear record
+          </button>
+        )}
       </div>
 
       <div className={`flex flex-col gap-2 ${loading ? "opacity-50" : ""}`}>
