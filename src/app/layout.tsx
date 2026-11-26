@@ -1,6 +1,7 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Providers from "@/components/Providers";
+import ServiceWorkerRegister from "@/components/ServiceWorkerRegister";
 import { Analytics } from "@vercel/analytics/react";
 import "./globals.css";
 
@@ -30,6 +31,15 @@ export const metadata: Metadata = {
   verification: {
     google: "HNVQQHVTCDxj0-Ow9FItRoaD8PEEWGWmqRSuGncDs4w",
   },
+  appleWebApp: {
+    capable: true,
+    title: "Track Your Amaal",
+    statusBarStyle: "default",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#16a34a",
 };
 
 export default function RootLayout({
@@ -42,6 +52,7 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-background text-foreground">
         <Providers>{children}</Providers>
+        <ServiceWorkerRegister />
         <Analytics />
       </body>
     </html>

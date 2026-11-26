@@ -5,7 +5,7 @@ import { authConfig } from "@/lib/auth.config";
 const { auth } = NextAuth(authConfig);
 
 const AUTH_PAGES = ["/login", "/register", "/forgot-password", "/reset-password"];
-const PUBLIC_PAGES = ["/", "/privacy", "/terms"];
+const PUBLIC_PAGES = ["/", "/privacy", "/terms", "/offline"];
 const PUBLIC_PREFIXES = ["/tools"];
 
 export default auth((req) => {
@@ -35,6 +35,6 @@ export default auth((req) => {
 
 export const config = {
   matcher: [
-    "/((?!api/auth|api/register|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico|html)$).*)",
+    "/((?!api/auth|api/register|_next/static|_next/image|favicon.ico|manifest.json|robots.txt|sitemap.xml|sw.js|.*\\.(?:png|jpg|jpeg|svg|gif|webp|ico|html)$).*)",
   ],
 };
