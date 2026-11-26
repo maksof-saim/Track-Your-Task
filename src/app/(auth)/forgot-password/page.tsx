@@ -25,20 +25,27 @@ export default function ForgotPasswordPage() {
     }
 
     setLoading(true);
-    setError(null);
     setMessage(null);
     setDevelopmentResetUrl(null);
-    const response = await fetch("/api/auth/forgot-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-    const data = await response.json().catch(() => ({}));
-    setLoading(false);
-    if (!response.ok) setError(data.error ?? "Something went wrong");
-    else {
-      setMessage(data.message);
-      setDevelopmentResetUrl(data.developmentResetUrl ?? null);
+
+    try {
+      const response = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        setError(data.error ?? "Something went wrong");
+      } else {
+        setMessage(data.message);
+        setDevelopmentResetUrl(data.developmentResetUrl ?? null);
+      }
+    } catch {
+      setError("Could not reach the server. Please check your internet connection and try again.");
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -53,7 +60,7 @@ export default function ForgotPasswordPage() {
       </div>
       <h2 className="mb-1 text-lg font-semibold text-foreground">Forgot Password?</h2>
       <p className="mb-6 text-sm text-foreground/60">
-        Enter your email and we'll send you a secure reset link.
+        Enter your email and we&apos;ll send you a secure reset link.
       </p>
       <form onSubmit={submit} className="flex flex-col gap-4">
         <div>
@@ -74,8 +81,20 @@ export default function ForgotPasswordPage() {
             placeholder="you@example.com"
           />
         </div>
-        {error && <p className="text-sm text-status-qaza">{error}</p>}
-        {message && <p className="text-sm text-primary-500">{message}</p>}
+        {error && (
+          <p role="alert" className="text-sm text-status-qaza">
+            {error}
+          </p>
+        )}
+        {message && (
+          <div className="text-sm text-primary-500">
+            <p>{message}</p>
+            <p className="mt-1 text-xs text-foreground/60">
+              If you do not see the email within a few minutes, please check your Spam or Junk
+              folder.
+            </p>
+          </div>
+        )}
         {developmentResetUrl && (
           <div className="rounded-lg border border-gold-400/40 bg-gold-100 p-3 text-sm text-foreground">
             <p className="mb-1 font-semibold">Local testing link:</p>
@@ -113,4 +132,3 @@ export default function ForgotPasswordPage() {
     </div>
   );
 }
-

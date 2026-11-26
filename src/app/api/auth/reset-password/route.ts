@@ -6,7 +6,12 @@ import { resetPasswordSchema } from "@/lib/validation";
 
 export async function POST(request: Request) {
   const parsed = resetPasswordSchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) return NextResponse.json({ error: parsed.error.issues[0]?.message ?? "Ghalat data" }, { status: 400 });
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Ghalat data" },
+      { status: 400 },
+    );
+  }
 
   const tokenHash = hashResetToken(parsed.data.token);
   const resetToken = await prisma.passwordResetToken.findUnique({ where: { tokenHash } });
@@ -18,8 +23,16 @@ export async function POST(request: Request) {
 
   const passwordHash = await hash(parsed.data.password, 12);
   await prisma.$transaction([
-    prisma.user.update({ where: { id: resetToken.userId }, data: { passwordHash } }),
-    prisma.passwordResetToken.delete({ where: { id: resetToken.id } }),
+    // A new session version signs the account out of every other device.
+    prisma.user.update({
+      where: { id: resetToken.userId },
+      data: { passwordHash, sessionVersion: { increment: 1 } },
+    }),
+    // Using the emailed link proves the user owns this address.
+    prisma.user.updateMany({
+      where: { id: resetToken.userId, emailVerified: null },
+      data: { emailVerified: new Date() },
+    }),
     prisma.passwordResetToken.deleteMany({ where: { userId: resetToken.userId } }),
   ]);
 

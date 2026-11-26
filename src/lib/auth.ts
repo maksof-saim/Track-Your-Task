@@ -11,6 +11,36 @@ import { allowRequest, getClientIp, hashKey } from "@/lib/rate-limit";
 export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   adapter: PrismaAdapter(prisma as unknown as Parameters<typeof PrismaAdapter>[0]),
+  callbacks: {
+    ...authConfig.callbacks,
+    signIn: async ({ user, account, profile }) => {
+      if (account?.provider !== "google") return true;
+      if (profile?.email_verified === false) return false;
+
+      const email = user.email?.trim().toLowerCase();
+      if (!email) return false;
+
+      // Account pre-hijacking protection: if someone registered this email with a password
+      // but never proved they own it, that password is removed and the existing sessions end.
+      // The Google sign-in itself proves ownership of the address.
+      const existing = await prisma.user.findUnique({
+        where: { email },
+        select: { id: true, emailVerified: true, passwordHash: true },
+      });
+      if (existing && !existing.emailVerified && existing.passwordHash) {
+        await prisma.user.update({
+          where: { id: existing.id },
+          data: {
+            passwordHash: null,
+            emailVerified: new Date(),
+            sessionVersion: { increment: 1 },
+          },
+        });
+      }
+
+      return true;
+    },
+  },
   providers: [
     Google({ allowDangerousEmailAccountLinking: true }),
     Credentials({
