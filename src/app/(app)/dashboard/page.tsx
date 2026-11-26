@@ -7,12 +7,14 @@ import { ChartIcon, PrayerIcon, TasbihIcon, BookIcon, ShieldIcon } from "@/compo
 
 type Analytics = {
   grid: { date: string; statuses: Record<string, string | null> }[];
+  customPrayers: { id: string; name: string; statuses: Record<string, string | null> }[];
   todayLoggedCount: number;
   totalPrayers: number;
   infradiPercent: number;
   qazaCount: number;
   totalLogged: number;
   zikrToday: number;
+  zikrKasratToday: number;
   zikrTotal30d: number;
   tilawatToday: number;
   tilawatTarget: number;
@@ -24,6 +26,7 @@ const CELL_STYLES: Record<string, string> = {
   JAMAAT: "bg-status-jamaat",
   INFRADI: "bg-status-infradi",
   QAZA: "bg-status-qaza",
+  DONE: "bg-status-infradi",
 };
 
 function currentStreak(grid: Analytics["grid"]): number {
@@ -88,7 +91,13 @@ export default function DashboardPage() {
           href="/zikr"
           icon={<TasbihIcon className="h-5 w-5" />}
           label={loading ? "..." : "Aaj ka Zikr"}
-          value={data ? `${data.zikrToday}` : "—"}
+          value={
+            data
+              ? data.zikrKasratToday > 0
+                ? `${data.zikrToday} + ${data.zikrKasratToday} kasrat`
+                : `${data.zikrToday}`
+              : "—"
+          }
         />
         <StatCard
           href="/tilawat"
@@ -175,6 +184,26 @@ export default function DashboardPage() {
                         key={day.date}
                         title={`${dayLabel} · ${formatDisplayDate(day.date)} · ${status ?? "Record nahi"}`}
                         className={`h-5 rounded-sm ${status ? CELL_STYLES[status] : "bg-status-empty"}`}
+                      />
+                    );
+                  })}
+                </div>
+              ))}
+              {data.customPrayers?.map((custom) => (
+                <div
+                  key={custom.id}
+                  className="mb-1 grid grid-cols-[70px_repeat(14,1fr)] items-center gap-1"
+                >
+                  <span className="truncate pr-1 text-xs text-foreground/60" title={custom.name}>
+                    {custom.name}
+                  </span>
+                  {data.grid.map((day) => {
+                    const status = custom.statuses[day.date];
+                    return (
+                      <span
+                        key={day.date}
+                        title={`${custom.name} · ${formatDisplayDate(day.date)} · ${status ?? "Record nahi"}`}
+                        className={`h-5 rounded-sm ${status ? CELL_STYLES[status] ?? "bg-status-jamaat" : "bg-status-empty"}`}
                       />
                     );
                   })}

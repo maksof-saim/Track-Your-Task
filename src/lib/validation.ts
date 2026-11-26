@@ -122,3 +122,36 @@ export const customChecklistLogSchema = z.object({
     .min(1, "At least one item is required")
     .max(50),
 });
+
+export const prayerDeleteSchema = z
+  .object({
+    date: isoDateSchema,
+    prayer: z.enum(PRAYER_NAMES).optional(),
+    customPrayerId: z.string().trim().min(1).max(100).optional(),
+  })
+  .refine((data) => Boolean(data.prayer) !== Boolean(data.customPrayerId), {
+    message: "Provide either prayer or customPrayerId",
+  });
+
+export const zikrDeleteSchema = z
+  .object({
+    date: isoDateSchema,
+    name: z.string().trim().min(1).max(80).optional(),
+    customZikrId: z.string().trim().min(1).max(100).optional(),
+  })
+  .refine((data) => Boolean(data.name) !== Boolean(data.customZikrId), {
+    message: "Provide either name or customZikrId",
+  });
+
+export const checklistDeleteSchema = z
+  .object({
+    date: isoDateSchema,
+    section: z.enum(CHECKLIST_SECTIONS),
+    item: z.string().trim().min(1).max(60).optional(),
+    customId: z.string().trim().min(1).max(100).optional(),
+    clearAll: z.literal(true).optional(),
+  })
+  .refine(
+    (data) => [data.item, data.customId, data.clearAll].filter(Boolean).length === 1,
+    { message: "Provide exactly one of item, customId or clearAll" },
+  );

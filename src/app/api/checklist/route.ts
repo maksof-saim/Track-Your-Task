@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import {
   checklistLogSchema,
   customChecklistLogSchema,
+  checklistDeleteSchema,
   CHECKLIST_SECTIONS,
 } from "@/lib/validation";
 import { isFutureInEveryTimezone } from "@/lib/dateUtils";
@@ -167,4 +168,43 @@ export async function POST(request: Request) {
   );
 
   return NextResponse.json({ ok: true });
+}
+
+export async function DELETE(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const parsed = checklistDeleteSchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: parsed.error.issues[0]?.message ?? "Invalid data" },
+      { status: 400 },
+    );
+  }
+
+  const { date, section, item, customId, clearAll } = parsed.data;
+  const dateValue = new Date(`${date}T00:00:00.000Z`);
+
+  if (clearAll) {
+    const result = await prisma.checklistLog.deleteMany({
+      where: { userId: session.user.id, date: dateValue, section },
+    });
+    return NextResponse.json({ ok: true, deleted: result.count });
+  }
+
+  const where = item
+    ? { userId: session.user.id, date: dateValue, section, item }
+    : customId
+      ? section === "TILAWAT"
+        ? { userId: session.user.id, date: dateValue, section, customTilawatId: customId }
+        : { userId: session.user.id, date: dateValue, section, customHifazatId: customId }
+      : null;
+  if (!where) {
+    return NextResponse.json({ error: "Invalid data" }, { status: 400 });
+  }
+
+  const result = await prisma.checklistLog.deleteMany({ where });
+  return NextResponse.json({ ok: true, deleted: result.count });
 }

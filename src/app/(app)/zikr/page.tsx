@@ -169,6 +169,39 @@ export default function ZikrPage() {
     }
   }
 
+  async function clearZikr(body: { name?: string; customZikrId?: string }) {
+    try {
+      const response = await fetch("/api/zikr", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ date, ...body }),
+      });
+      if (!response.ok) {
+        toast.error("Could not clear zikr", { description: "Please try again." });
+        return;
+      }
+
+      if (body.name) {
+        const name = body.name;
+        setEntries((current) => current.filter((entry) => entry.name !== name));
+        setDrafts((current) => ({ ...current, [name]: initialDraft() }));
+      }
+      if (body.customZikrId) {
+        const customZikrId = body.customZikrId;
+        const custom = customZikrs.find((item) => item.id === customZikrId);
+        setEntries((current) =>
+          current.filter((entry) => (custom ? entry.name !== custom.name : true)),
+        );
+        setDrafts((current) => ({ ...current, [customKey(customZikrId)]: initialDraft() }));
+      }
+      toast.success("Zikr record cleared");
+    } catch {
+      toast.error("Could not clear zikr", {
+        description: "Please check your internet connection and try again.",
+      });
+    }
+  }
+
   async function saveAll() {
     const builtIn = AZKAAR_TARGET_ITEMS.flatMap(({ name }) => {
       const parsed = parseDraft(drafts[name] ?? initialDraft());
@@ -305,6 +338,7 @@ export default function ZikrPage() {
               entry={entry}
               draft={drafts[name] ?? initialDraft(entry)}
               onChange={(changes) => updateDraft(name, changes)}
+              onClear={entry ? () => clearZikr({ name }) : undefined}
             />
           );
         })}
@@ -346,6 +380,7 @@ export default function ZikrPage() {
                   entry={entry}
                   draft={drafts[key] ?? initialDraft(entry)}
                   onChange={(changes) => updateDraft(key, changes)}
+                  onClear={entry ? () => clearZikr({ customZikrId: custom.id }) : undefined}
                   onRemove={() => removeCustomZikr(custom)}
                 />
               );
@@ -381,6 +416,7 @@ function ZikrCard({
   entry,
   draft,
   onChange,
+  onClear,
   onRemove,
 }: {
   id: string;
@@ -388,6 +424,7 @@ function ZikrCard({
   entry?: ZikrEntry;
   draft: Draft;
   onChange: (changes: Partial<Draft>) => void;
+  onClear?: () => void;
   onRemove?: () => void;
 }) {
   return (
@@ -399,15 +436,26 @@ function ZikrCard({
             {entry?.mode === "KASRAT" ? "Kasrat se saved" : `Today's count: ${entry?.count ?? 0}`}
           </p>
         </div>
-        {onRemove && (
-          <button
-            type="button"
-            onClick={onRemove}
-            className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-status-qaza hover:underline"
-          >
-            Remove
-          </button>
-        )}
+        <div className="flex shrink-0 items-center gap-1">
+          {onClear && (
+            <button
+              type="button"
+              onClick={onClear}
+              className="rounded-lg px-2 py-1 text-xs font-medium text-foreground/50 hover:text-status-qaza hover:underline"
+            >
+              Clear
+            </button>
+          )}
+          {onRemove && (
+            <button
+              type="button"
+              onClick={onRemove}
+              className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-status-qaza hover:underline"
+            >
+              Remove
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
