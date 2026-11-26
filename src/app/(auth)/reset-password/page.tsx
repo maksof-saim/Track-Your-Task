@@ -17,6 +17,7 @@ function ResetForm() {
   const token = params.get("token") ?? "";
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -44,15 +45,21 @@ function ResetForm() {
     }
 
     setLoading(true);
-    const response = await fetch("/api/auth/reset-password", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, password }),
-    });
-    const data = await response.json().catch(() => ({}));
-    setLoading(false);
-    if (!response.ok) setError(data.error ?? "Reset link is invalid");
-    else setDone(true);
+    try {
+      const response = await fetch("/api/auth/reset-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token, password }),
+      });
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) setError(data.error ?? "Reset link is invalid");
+      else setDone(true);
+    } catch {
+      setError("Could not reach the server. Please check your internet connection and try again.");
+    } finally {
+      setLoading(false);
+    }
   }
 
   if (done) {
@@ -68,8 +75,11 @@ function ResetForm() {
         <h2 className="mb-2 text-lg font-semibold text-foreground">
           Password updated successfully
         </h2>
-        <p className="mb-6 text-sm text-foreground/60">
+        <p className="mb-2 text-sm text-foreground/60">
           You can now sign in with your new password.
+        </p>
+        <p className="mb-6 text-xs text-foreground/50">
+          For your security, you have been signed out of your other devices.
         </p>
         <Link
           href="/login"
@@ -101,16 +111,27 @@ function ResetForm() {
           <label htmlFor="password" className="mb-1 block text-sm font-medium text-foreground/80">
             New Password
           </label>
-          <input
-            id="password"
-            type="password"
-            required
-            minLength={8}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
-            placeholder="Enter new password"
-          />
+          <div className="relative">
+            <input
+              id="password"
+              type={showPassword ? "text" : "password"}
+              autoComplete="new-password"
+              required
+              minLength={8}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-lg border border-border bg-surface py-2 pe-16 ps-3 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
+              placeholder="Enter new password"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((value) => !value)}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 end-0 flex min-w-14 items-center justify-center px-3 text-xs font-medium text-foreground/60 hover:text-foreground"
+            >
+              {showPassword ? "Hide" : "Show"}
+            </button>
+          </div>
         </div>
         <div>
           <label htmlFor="confirm" className="mb-1 block text-sm font-medium text-foreground/80">
@@ -118,7 +139,8 @@ function ResetForm() {
           </label>
           <input
             id="confirm"
-            type="password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="new-password"
             required
             minLength={8}
             value={confirm}
@@ -127,7 +149,11 @@ function ResetForm() {
             placeholder="Confirm new password"
           />
         </div>
-        {error && <p className="text-sm text-status-qaza">{error}</p>}
+        {error && (
+          <p role="alert" className="text-sm text-status-qaza">
+            {error}
+          </p>
+        )}
         <button
           type="submit"
           disabled={loading || !token}
@@ -146,4 +172,3 @@ function ResetForm() {
     </div>
   );
 }
-
