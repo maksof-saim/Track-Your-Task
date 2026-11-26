@@ -19,7 +19,7 @@ export const metadata: Metadata = {
         siteName: "Track Your Amaal",
         type: "website",
     },
-    twitter: { card: "summary", title: TITLE, description: DESCRIPTION },
+    twitter: { card: "summary_large_image", title: TITLE, description: DESCRIPTION },
 };
 
 export const viewport: Viewport = {
@@ -28,6 +28,18 @@ export const viewport: Viewport = {
 
 const focusRing =
     "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#b8963e] focus-visible:ring-offset-2";
+
+const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "Track Your Amaal",
+    url: SITE_URL,
+    description: DESCRIPTION,
+    applicationCategory: "LifestyleApplication",
+    operatingSystem: "Any",
+    browserRequirements: "Requires a modern web browser",
+    inLanguage: "en",
+};
 
 const features = [
     {
@@ -57,6 +69,10 @@ const steps = [
 export default function LandingPage() {
     return (
         <div className="min-h-screen overflow-x-clip bg-[#f6f3ea] pb-24 text-[#23302c] sm:pb-0">
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+            />
             <header className="sticky top-0 z-30 bg-[#0b5d4b] shadow-sm">
                 <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-2.5 sm:py-3">
                     <Link
