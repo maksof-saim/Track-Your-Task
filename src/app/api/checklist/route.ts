@@ -195,7 +195,14 @@ export async function DELETE(request: Request) {
   }
 
   const where = item
-    ? { userId: session.user.id, date: dateValue, section, item }
+    ? {
+        userId: session.user.id,
+        date: dateValue,
+        section,
+        item,
+        customTilawatId: null,
+        customHifazatId: null,
+      }
     : customId
       ? section === "TILAWAT"
         ? { userId: session.user.id, date: dateValue, section, customTilawatId: customId }

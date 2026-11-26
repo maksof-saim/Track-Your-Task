@@ -23,20 +23,23 @@ export async function getUserAnalytics(userId: string, targetDate?: string) {
 
   // Run queries sequentially to avoid database connection pool exhaustion
   const prayerLogs = await prisma.prayerLog.findMany({
-    where: { userId, date: { gte: since }, customPrayerId: null },
+    where: { userId, date: { gte: since } },
     orderBy: { date: "asc" },
   });
+  const standardPrayerLogs = prayerLogs.filter((log) => log.customPrayerId === null);
+  const customPrayerLogs = prayerLogs.filter((log) => log.customPrayerId !== null);
 
-  const customPrayerLogs = await prisma.prayerLog.findMany({
-    where: { userId, date: { gte: since }, customPrayerId: { not: null } },
-    orderBy: { date: "asc" },
+  // Custom prayer rows and the custom checklist targets come from one user query.
+  const customItems = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      customPrayers: { select: { id: true, name: true }, orderBy: { createdAt: "asc" } },
+      _count: { select: { customTilawats: true, customHifazats: true } },
+    },
   });
-
-  const customPrayers = await prisma.customPrayer.findMany({
-    where: { userId },
-    select: { id: true, name: true },
-    orderBy: { createdAt: "asc" },
-  });
+  const customPrayers = customItems?.customPrayers ?? [];
+  const customTilawatCount = customItems?._count.customTilawats ?? 0;
+  const customHifazatCount = customItems?._count.customHifazats ?? 0;
 
   const zikrLogs = await prisma.zikrLog.findMany({
     where: { userId, date: { gte: since } },
@@ -47,11 +50,8 @@ export async function getUserAnalytics(userId: string, targetDate?: string) {
     where: { userId, date: { gte: since } },
   });
 
-  const customTilawatCount = await prisma.customTilawat.count({ where: { userId } });
-  const customHifazatCount = await prisma.customHifazat.count({ where: { userId } });
-
   const byDate = new Map<string, Record<string, string>>();
-  for (const log of prayerLogs) {
+  for (const log of standardPrayerLogs) {
     const iso = log.date.toISOString().slice(0, 10);
     if (!byDate.has(iso)) byDate.set(iso, {});
     if (log.prayer) {
@@ -85,17 +85,11 @@ export async function getUserAnalytics(userId: string, targetDate?: string) {
     ),
   }));
 
-  let jamaat = 0;
-  let infradi = 0;
-  let qaza = 0;
-  let other = 0;
-  for (const log of [...prayerLogs, ...customPrayerLogs]) {
-    if (log.status === "JAMAAT") jamaat++;
-    else if (log.status === "INFRADI") infradi++;
-    else if (log.status === "QAZA") qaza++;
-    else other++;
-  }
-  const totalLogged = jamaat + infradi + qaza + other;
+  const jamaat = prayerLogs.filter((log) => log.status === "JAMAAT").length;
+  const infradi = prayerLogs.filter((log) => log.status === "INFRADI").length;
+  const qaza = prayerLogs.filter((log) => log.status === "QAZA").length;
+  // Every saved log counts as logged, including custom prayers and DONE statuses.
+  const totalLogged = prayerLogs.length;
 
   const todayStatuses = byDate.get(todayIso) ?? {};
   const fardKeys = new Set(FARD_PRAYERS.map((p) => p.key));
