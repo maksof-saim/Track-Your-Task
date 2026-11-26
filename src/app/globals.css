@@ -95,6 +95,12 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Urdu UI: Nastaliq needs its own font stack and roomier lines. */
+[data-locale="ur"] {
+  font-family: var(--font-urdu), var(--font-geist-sans), Arial, sans-serif;
+  line-height: 1.9;
+}
+
 button,
 a,
 input,

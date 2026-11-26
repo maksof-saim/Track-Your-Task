@@ -4,9 +4,11 @@ import Link from "next/link";
 import { MosqueIcon, MenuIcon } from "@/components/icons";
 import LogoutButton from "@/components/LogoutButton";
 import { useSidebar } from "@/components/SidebarContext";
+import { useI18n } from "@/lib/i18n/client";
 
 export default function Header({ userName }: { userName: string }) {
   const { toggle } = useSidebar();
+  const { t } = useI18n();
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 bg-primary-600 text-white shadow-md sm:sticky sm:z-20 sm:shadow-sm">
@@ -16,7 +18,7 @@ export default function Header({ userName }: { userName: string }) {
           <button
             type="button"
             onClick={toggle}
-            aria-label="Menu kholein"
+            aria-label={t.header.menuAria}
             className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white/90 transition-colors hover:bg-white/10 sm:hidden"
           >
             <MenuIcon className="h-5 w-5" />
@@ -33,7 +35,7 @@ export default function Header({ userName }: { userName: string }) {
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <span className="hidden text-sm text-white/85 sm:inline">
-            Assalamu Alaikum, {userName}
+            {t.header.greeting}, {userName}
           </span>
           <LogoutButton />
         </div>

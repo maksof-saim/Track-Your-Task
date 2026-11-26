@@ -1,8 +1,11 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { toast } from "sonner";
+import { setLocaleCookie, useI18n } from "@/lib/i18n/client";
+import { LOCALE_LABELS, LOCALES, type Locale } from "@/lib/i18n/config";
 
 type Account = {
     name: string;
@@ -13,6 +16,8 @@ type Account = {
 };
 
 export default function SettingsPage() {
+    const router = useRouter();
+    const { locale, t } = useI18n();
     const [account, setAccount] = useState<Account | null>(null);
     const [loadError, setLoadError] = useState(false);
     const [confirmText, setConfirmText] = useState("");
@@ -36,6 +41,12 @@ export default function SettingsPage() {
             cancelled = true;
         };
     }, []);
+
+    function changeLocale(next: Locale) {
+        if (next === locale) return;
+        setLocaleCookie(next);
+        router.refresh();
+    }
 
     async function handleDelete(event: FormEvent) {
         event.preventDefault();
@@ -82,7 +93,7 @@ export default function SettingsPage() {
     }
 
     const memberSince = account
-        ? new Date(account.createdAt).toLocaleDateString("en-GB", {
+        ? new Date(account.createdAt).toLocaleDateString(locale === "ur" ? "ur-PK" : "en-GB", {
             day: "2-digit",
             month: "short",
             year: "numeric",
@@ -95,6 +106,28 @@ export default function SettingsPage() {
                 <h1 className="text-xl font-semibold text-foreground">Account</h1>
                 <p className="text-sm text-foreground/60">Your details, your data and your account</p>
             </div>
+
+            <section className="mb-4 rounded-xl border border-border bg-surface p-4 sm:p-5">
+                <h2 className="mb-1 text-sm font-semibold text-foreground/70">{t.settings.language}</h2>
+                <p className="mb-3 text-sm text-foreground/60">{t.settings.languageHint}</p>
+                <div className="flex flex-wrap gap-2">
+                    {LOCALES.map((option) => (
+                        <button
+                            key={option}
+                            type="button"
+                            onClick={() => changeLocale(option)}
+                            aria-pressed={locale === option}
+                            lang={option}
+                            className={`min-h-11 rounded-lg border px-4 py-2 text-sm font-semibold transition-colors ${locale === option
+                                ? "border-primary-500 bg-primary-50 text-primary-600"
+                                : "border-border text-foreground/70 hover:border-primary-300"
+                                }`}
+                        >
+                            {LOCALE_LABELS[option]}
+                        </button>
+                    ))}
+                </div>
+            </section>
 
             <section className="mb-4 rounded-xl border border-border bg-surface p-4 sm:p-5">
                 <h2 className="mb-3 text-sm font-semibold text-foreground/70">Your details</h2>
