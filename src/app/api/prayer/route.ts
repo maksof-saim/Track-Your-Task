@@ -174,7 +174,7 @@ export async function DELETE(request: Request) {
   const dateValue = new Date(`${date}T00:00:00.000Z`);
 
   const where = prayer
-    ? { userId: session.user.id, date: dateValue, prayer }
+    ? { userId: session.user.id, date: dateValue, prayer, customPrayerId: null }
     : customPrayerId
       ? { userId: session.user.id, date: dateValue, customPrayerId }
       : null;

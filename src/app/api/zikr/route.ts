@@ -211,7 +211,7 @@ export async function DELETE(request: Request) {
   const dateValue = new Date(`${date}T00:00:00.000Z`);
 
   const where = name
-    ? { userId: session.user.id, date: dateValue, name }
+    ? { userId: session.user.id, date: dateValue, name, customZikrId: null }
     : customZikrId
       ? { userId: session.user.id, date: dateValue, customZikrId }
       : null;

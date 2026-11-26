@@ -93,9 +93,7 @@ export default function DashboardPage() {
           label={loading ? "..." : "Aaj ka Zikr"}
           value={
             data
-              ? data.zikrKasratToday > 0
-                ? `${data.zikrToday} + ${data.zikrKasratToday} kasrat`
-                : `${data.zikrToday}`
+              ? `${data.zikrToday}${data.zikrKasratToday ? ` + ${data.zikrKasratToday} kasrat` : ""}`
               : "—"
           }
         />
@@ -189,7 +187,7 @@ export default function DashboardPage() {
                   })}
                 </div>
               ))}
-              {data.customPrayers?.map((custom) => (
+              {data.customPrayers.map((custom) => (
                 <div
                   key={custom.id}
                   className="mb-1 grid grid-cols-[70px_repeat(14,1fr)] items-center gap-1"
