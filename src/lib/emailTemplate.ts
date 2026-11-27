@@ -1,8 +1,18 @@
 import type { Dictionary } from "@/lib/i18n/en";
+import { isLocale } from "@/lib/i18n/config";
+import { getDictionary } from "@/lib/i18n/dictionaries";
+import { RESET_TOKEN_TTL_MS } from "@/lib/password-reset";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 
-export type ResetCopy = Dictionary["email"]["reset"];
+type ResetCopy = Dictionary["email"]["reset"];
 
-const APP_NAME = "Track Your Amaal";
+type ResetEmailContent = {
+  copy: ResetCopy;
+  name: string;
+  resetUrl: string;
+  ttl: string;
+};
+
 const TAGLINE = "Amaal Tracker";
 
 const COLORS = {
@@ -18,7 +28,7 @@ const COLORS = {
 const SERIF = "Georgia, 'Times New Roman', serif";
 const SANS = "Arial, Helvetica, sans-serif";
 
-export function escapeHtml(value: string) {
+function escapeHtml(value: string) {
   return value
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -26,24 +36,29 @@ export function escapeHtml(value: string) {
     .replace(/"/g, "&quot;");
 }
 
-function getBaseUrl() {
-  return (process.env.APP_URL ?? "https://track-your-amaal.vercel.app").replace(/\/+$/, "");
+/** The reset email's copy and its "valid for" text, in the account's language. */
+export function getResetEmailCopy(locale?: string) {
+  const copy = getDictionary(isLocale(locale) ? locale : "en").email.reset;
+  return { copy, ttl: copy.ttl(RESET_TOKEN_TTL_MS) };
 }
 
-export function buildResetEmailHtml({
-  copy,
-  name,
-  resetUrl,
-  ttl,
-}: {
-  copy: ResetCopy;
-  name: string;
-  resetUrl: string;
-  ttl: string;
-}) {
-  const safeName = escapeHtml(name || "");
+export function buildResetEmailText({ copy, name, resetUrl, ttl }: ResetEmailContent) {
+  return [
+    copy.greeting(name),
+    "",
+    ...copy.textBody(ttl),
+    "",
+    resetUrl,
+    "",
+    copy.textFooter,
+    "",
+    SITE_NAME,
+  ].join("\n");
+}
+
+export function buildResetEmailHtml({ copy, name, resetUrl, ttl }: ResetEmailContent) {
   const safeUrl = escapeHtml(resetUrl);
-  const logoUrl = `${getBaseUrl()}/email-logo.png`;
+  const logoUrl = `${SITE_URL}/email-logo.png`;
   const align = copy.dir === "rtl" ? "text-align:right;" : "";
   const noteEdge = copy.dir === "rtl" ? "right" : "left";
 
@@ -71,9 +86,9 @@ export function buildResetEmailHtml({
               <div style="font-family:${SERIF};font-size:20px;line-height:30px;color:${COLORS.goldLight};padding-bottom:14px;" dir="rtl">
                 بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ
               </div>
-              <img src="${logoUrl}" width="56" height="56" alt="${APP_NAME}" style="display:block;margin:0 auto 12px auto;border:0;border-radius:12px;">
+              <img src="${logoUrl}" width="56" height="56" alt="${SITE_NAME}" style="display:block;margin:0 auto 12px auto;border:0;border-radius:12px;">
               <div style="font-family:${SERIF};font-size:24px;line-height:30px;font-weight:bold;color:#ffffff;">
-                ${APP_NAME}
+                ${SITE_NAME}
               </div>
               <div style="font-family:${SANS};font-size:12px;letter-spacing:1.5px;text-transform:uppercase;color:${COLORS.goldLight};padding-top:4px;">
                 ${TAGLINE}
@@ -88,7 +103,7 @@ export function buildResetEmailHtml({
           <tr>
             <td bgcolor="#ffffff" style="background-color:#ffffff;padding:32px 32px 8px 32px;font-family:${SANS};font-size:15px;line-height:25px;color:${COLORS.text};${align}">
               <h1 style="margin:0 0 16px 0;font-family:${SERIF};font-size:22px;line-height:30px;color:${COLORS.emeraldDark};">${escapeHtml(copy.heading)}</h1>
-              <p style="margin:0 0 14px 0;">${escapeHtml(copy.greeting(safeName))}</p>
+              <p style="margin:0 0 14px 0;">${escapeHtml(copy.greeting(name))}</p>
               <p style="margin:0 0 24px 0;">${escapeHtml(copy.intro(ttl))}</p>
             </td>
           </tr>
@@ -130,7 +145,7 @@ export function buildResetEmailHtml({
           <!-- Footer -->
           <tr>
             <td align="center" bgcolor="${COLORS.emeraldDark}" style="background-color:${COLORS.emeraldDark};border-radius:0 0 12px 12px;padding:20px 24px;font-family:${SANS};font-size:12px;line-height:18px;color:${COLORS.goldLight};">
-              ${APP_NAME} &middot; ${escapeHtml(copy.footerTagline)}<br>
+              ${SITE_NAME} &middot; ${escapeHtml(copy.footerTagline)}<br>
               ${escapeHtml(copy.footerNote)}
             </td>
           </tr>

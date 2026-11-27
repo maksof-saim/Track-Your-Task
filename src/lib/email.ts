@@ -1,12 +1,12 @@
 import nodemailer from "nodemailer";
-import { RESET_TOKEN_TTL_MS } from "@/lib/password-reset";
-import { getDictionary } from "@/lib/i18n/dictionaries";
-import { isLocale, type Locale } from "@/lib/i18n/config";
-import { buildResetEmailHtml } from "@/lib/emailTemplate";
+import {
+  buildResetEmailHtml,
+  buildResetEmailText,
+  getResetEmailCopy,
+} from "@/lib/emailTemplate";
+import { SITE_NAME } from "@/lib/site";
 
-type ResetEmail = { to: string; name: string; resetUrl: string; locale?: Locale };
-
-const APP_NAME = "Track Your Amaal";
+type ResetEmail = { to: string; name: string; resetUrl: string; locale?: string };
 
 export async function sendPasswordResetEmail({ to, name, resetUrl, locale }: ResetEmail) {
   const user = process.env.GMAIL_USER;
@@ -17,8 +17,7 @@ export async function sendPasswordResetEmail({ to, name, resetUrl, locale }: Res
     return false;
   }
 
-  const copy = getDictionary(isLocale(locale) ? locale : "en").email.reset;
-  const ttl = copy.ttl(RESET_TOKEN_TTL_MS);
+  const { copy, ttl } = getResetEmailCopy(locale);
 
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
@@ -28,21 +27,11 @@ export async function sendPasswordResetEmail({ to, name, resetUrl, locale }: Res
   });
 
   await transporter.sendMail({
-    from: `"${APP_NAME}" <${user}>`,
+    from: `"${SITE_NAME}" <${user}>`,
     replyTo: user,
     to,
     subject: copy.subject,
-    text: [
-      copy.greeting(name),
-      "",
-      ...copy.textBody(ttl),
-      "",
-      resetUrl,
-      "",
-      copy.textFooter,
-      "",
-      APP_NAME,
-    ].join("\n"),
+    text: buildResetEmailText({ copy, name, resetUrl, ttl }),
     html: buildResetEmailHtml({ copy, name, resetUrl, ttl }),
   });
 
