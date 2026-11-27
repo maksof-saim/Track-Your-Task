@@ -27,7 +27,7 @@ function getJson(url: string) {
 
 export default function PrayerPage() {
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const prayerLabel = (key: PrayerKey, iso: string) =>
     key === "DHUHR" && isFriday(iso) ? t.meta.prayers.JUMMAH : t.meta.prayers[key];
   const [date, setDate] = useState(todayISO());
@@ -263,7 +263,7 @@ export default function PrayerPage() {
               </div>
               <div>
                 <p className="text-xs font-medium text-foreground/60">{t.prayer.selectedDateLabel}</p>
-                <p className="text-sm font-semibold text-foreground">{formatDisplayDate(date)}</p>
+                <p className="text-sm font-semibold text-foreground">{formatDisplayDate(date, locale)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">

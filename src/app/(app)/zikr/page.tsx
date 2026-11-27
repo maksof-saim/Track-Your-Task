@@ -39,7 +39,7 @@ function parseDraft(draft: Draft): { mode: ZikrMode; count: number } | null {
 }
 
 export default function ZikrPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [date, setDate] = useState(todayISO());
   const [entries, setEntries] = useState<ZikrEntry[]>([]);
   const [customZikrs, setCustomZikrs] = useState<CustomZikr[]>([]);
@@ -289,7 +289,7 @@ export default function ZikrPage() {
               </div>
               <div>
                 <p className="text-xs font-medium text-foreground/60">{t.zikr.selectedDateLabel}</p>
-                <p className="text-sm font-semibold text-foreground">{formatDisplayDate(date)}</p>
+                <p className="text-sm font-semibold text-foreground">{formatDisplayDate(date, locale)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">

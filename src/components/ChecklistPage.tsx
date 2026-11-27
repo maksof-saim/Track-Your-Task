@@ -53,7 +53,7 @@ export default function ChecklistPage({
   items: readonly ChecklistItemDef[];
 }) {
   const router = useRouter();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const metaItems = (section === "TILAWAT" ? t.meta.tilawat : t.meta.hifazat) as Record<
     string,
     { label: string; hint?: string }
@@ -323,7 +323,7 @@ export default function ChecklistPage({
               </div>
               <div>
                 <p className="text-xs font-medium text-foreground/60">{t.checklist.selectedDateLabel}</p>
-                <p className="text-sm font-semibold text-foreground">{formatDisplayDate(date)}</p>
+                <p className="text-sm font-semibold text-foreground">{formatDisplayDate(date, locale)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">

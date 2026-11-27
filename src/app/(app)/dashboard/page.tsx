@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { PRAYERS, formatDisplayDate, isFriday, todayISO } from "@/lib/prayerMeta";
+import { PRAYERS, formatDisplayDate, formatWeekday, isFriday, todayISO } from "@/lib/prayerMeta";
 import { ChartIcon, PrayerIcon, TasbihIcon, BookIcon, ShieldIcon } from "@/components/icons";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -53,7 +53,7 @@ function streakLabel(grid: Analytics["grid"], days: string): string {
 }
 
 export default function DashboardPage() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const prayerLabel = (key: (typeof PRAYERS)[number]["key"], iso: string) =>
     key === "DHUHR" && isFriday(iso) ? t.meta.prayers.JUMMAH : t.meta.prayers[key];
   const [data, setData] = useState<Analytics | null>(null);
@@ -168,7 +168,7 @@ export default function DashboardPage() {
                     key={day.date}
                     className="text-center text-[10px] text-foreground/40"
                   >
-                    {formatDisplayDate(day.date).slice(0, 3)}
+                    {formatWeekday(day.date, locale)}
                   </span>
                 ))}
               </div>
@@ -184,7 +184,7 @@ export default function DashboardPage() {
                     return (
                       <span
                         key={day.date}
-                        title={`${dayLabel} · ${formatDisplayDate(day.date)} · ${status ?? t.dashboard.noRecord}`}
+                        title={`${dayLabel} · ${formatDisplayDate(day.date, locale)} · ${status ?? t.dashboard.noRecord}`}
                         className={`h-5 rounded-sm ${status ? CELL_STYLES[status] : "bg-status-empty"}`}
                       />
                     );
@@ -204,7 +204,7 @@ export default function DashboardPage() {
                     return (
                       <span
                         key={day.date}
-                        title={`${custom.name} · ${formatDisplayDate(day.date)} · ${status ?? t.dashboard.noRecord}`}
+                        title={`${custom.name} · ${formatDisplayDate(day.date, locale)} · ${status ?? t.dashboard.noRecord}`}
                         className={`h-5 rounded-sm ${status ? CELL_STYLES[status] ?? "bg-status-jamaat" : "bg-status-empty"}`}
                       />
                     );
