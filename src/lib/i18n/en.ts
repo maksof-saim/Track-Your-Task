@@ -229,6 +229,13 @@ export const en = {
     },
   },
   public: {
+    notFound: {
+      code: "Error 404",
+      title: "Page not found",
+      body: "The page you are looking for does not exist or may have moved.",
+      home: "Go to home page",
+      tools: "Browse tools",
+    },
     shell: {
       mainAria: "Main",
       footerAria: "Footer",
@@ -512,6 +519,39 @@ export const en = {
       { heading: "10. Contact", paragraphs: ["Questions about these terms can be sent to {email}."] },
     ],
   } satisfies LegalCopy,
+  email: {
+    reset: {
+      lang: "en",
+      dir: "ltr" as "ltr" | "rtl",
+      subject: "Reset your Track Your Amaal password",
+      preview: (ttl: string) =>
+        `Reset your Track Your Amaal password. This link is valid for ${ttl}.`,
+      heading: "Reset your password",
+      greeting: (name: string) => `Assalam-o-alaikum ${name || "there"},`,
+      intro: (ttl: string) =>
+        `We received a request to reset the password for your Track Your Amaal account. Click the button below to choose a new password. This link is valid for ${ttl}.`,
+      button: "Reset Password",
+      fallbackHint: "If the button does not work, paste this link into your browser:",
+      securityNote:
+        "If you did not request this, you can safely ignore this email. Your password will not change. Never share this link with anyone.",
+      textBody: (ttl: string) => [
+        "We received a request to reset the password for your Track Your Amaal account.",
+        `Use the link below to choose a new password (valid for ${ttl}):`,
+      ],
+      textFooter:
+        "If you did not request this, you can safely ignore this email. Your password will not change.",
+      footerTagline: "Track your daily prayers and zikr",
+      footerNote: "This is an automated message, please do not reply.",
+      ttl: (ms: number) => {
+        const minutes = Math.max(1, Math.round(ms / 60000));
+        if (minutes >= 60 && minutes % 60 === 0) {
+          const hours = minutes / 60;
+          return `${hours} hour${hours > 1 ? "s" : ""}`;
+        }
+        return `${minutes} minutes`;
+      },
+    },
+  },
   auth: {
     signInTitle: "Sign In",
     signInSubtitle: "Sign in to view your worship records",

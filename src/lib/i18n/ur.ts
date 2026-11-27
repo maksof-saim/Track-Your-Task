@@ -229,6 +229,13 @@ export const ur: Dictionary = {
     },
   },
   public: {
+    notFound: {
+      code: "خرابی 404",
+      title: "صفحہ نہیں ملا",
+      body: "جو صفحہ آپ ڈھونڈ رہے ہیں وہ موجود نہیں یا اس کی جگہ بدل گئی ہے۔",
+      home: "ہوم پیج پر جائیں",
+      tools: "ٹولز دیکھیں",
+    },
     shell: {
       mainAria: "مین",
       footerAria: "فوٹر",
@@ -507,6 +514,39 @@ export const ur: Dictionary = {
       },
       { heading: "10. رابطہ", paragraphs: ["ان شرائط سے متعلق سوالات {email} پر بھیجے جا سکتے ہیں۔"] },
     ],
+  },
+  email: {
+    reset: {
+      lang: "ur",
+      dir: "rtl",
+      subject: "اپنا Track Your Amaal پاس ورڈ ری سیٹ کریں",
+      preview: (ttl: string) =>
+        `اپنا Track Your Amaal پاس ورڈ ری سیٹ کریں۔ یہ لنک ${ttl} کے لیے کارآمد ہے۔`,
+      heading: "اپنا پاس ورڈ ری سیٹ کریں",
+      greeting: (name: string) => `السلام علیکم ${name || "صاحب"}،`,
+      intro: (ttl: string) =>
+        `ہمیں آپ کے Track Your Amaal اکاؤنٹ کا پاس ورڈ ری سیٹ کرنے کی درخواست موصول ہوئی ہے۔ نیا پاس ورڈ منتخب کرنے کے لیے نیچے دیا گیا بٹن دبائیں۔ یہ لنک ${ttl} کے لیے کارآمد ہے۔`,
+      button: "پاس ورڈ ری سیٹ کریں",
+      fallbackHint: "اگر بٹن کام نہ کرے تو یہ لنک براؤزر میں پیسٹ کریں:",
+      securityNote:
+        "اگر آپ نے یہ درخواست نہیں دی تو اس ای میل کو نظر انداز کر دیں۔ آپ کا پاس ورڈ تبدیل نہیں ہوگا۔ یہ لنک کسی کے ساتھ شیئر نہ کریں۔",
+      textBody: (ttl: string) => [
+        "ہمیں آپ کے Track Your Amaal اکاؤنٹ کا پاس ورڈ ری سیٹ کرنے کی درخواست موصول ہوئی ہے۔",
+        `نیا پاس ورڈ منتخب کرنے کے لیے نیچے دیا گیا لنک استعمال کریں (${ttl} کے لیے کارآمد):`,
+      ],
+      textFooter:
+        "اگر آپ نے یہ درخواست نہیں دی تو اس ای میل کو نظر انداز کر دیں۔ آپ کا پاس ورڈ تبدیل نہیں ہوگا۔",
+      footerTagline: "روزانہ نماز اور ذکر کا ریکارڈ",
+      footerNote: "یہ خودکار پیغام ہے، براہِ کرم جواب نہ دیں۔",
+      ttl: (ms: number) => {
+        const minutes = Math.max(1, Math.round(ms / 60000));
+        if (minutes >= 60 && minutes % 60 === 0) {
+          const hours = minutes / 60;
+          return hours === 1 ? "1 گھنٹہ" : `${hours} گھنٹے`;
+        }
+        return `${minutes} منٹ`;
+      },
+    },
   },
   auth: {
     signInTitle: "سائن ان",

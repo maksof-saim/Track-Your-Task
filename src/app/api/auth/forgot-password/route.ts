@@ -4,6 +4,7 @@ import { forgotPasswordSchema } from "@/lib/validation";
 import { createResetToken, RESET_TOKEN_TTL_MS } from "@/lib/password-reset";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { allowRequest, getClientIp, hashKey } from "@/lib/rate-limit";
+import { isLocale } from "@/lib/i18n/config";
 
 const GENERIC_MESSAGE = "Agar is email ka account hai to reset link bhej diya gaya hai.";
 
@@ -36,7 +37,12 @@ export async function POST(request: Request) {
     const baseUrl = process.env.APP_URL ?? new URL(request.url).origin;
     developmentResetUrl = `${baseUrl}/reset-password?token=${token}`;
     try {
-      await sendPasswordResetEmail({ to: user.email, name: user.name, resetUrl: developmentResetUrl });
+      await sendPasswordResetEmail({
+        to: user.email,
+        name: user.name,
+        resetUrl: developmentResetUrl,
+        locale: isLocale(user.locale) ? user.locale : undefined,
+      });
     } catch (error) {
       console.error("Password reset email failed", error);
     }
