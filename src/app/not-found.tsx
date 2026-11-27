@@ -9,7 +9,9 @@ export default async function NotFound() {
 
   return (
     <div
+      lang={locale}
       dir={localeDir(locale)}
+      data-locale={locale}
       className="flex min-h-screen flex-col items-center justify-center bg-[#f6f3ea] px-6 text-center text-[#23302c]"
     >
       <p className="text-sm font-semibold uppercase tracking-widest text-[#7a5f17]">{t.code}</p>

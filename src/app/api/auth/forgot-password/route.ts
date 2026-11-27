@@ -4,7 +4,6 @@ import { forgotPasswordSchema } from "@/lib/validation";
 import { createResetToken, RESET_TOKEN_TTL_MS } from "@/lib/password-reset";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { allowRequest, getClientIp, hashKey } from "@/lib/rate-limit";
-import { isLocale } from "@/lib/i18n/config";
 
 const GENERIC_MESSAGE = "Agar is email ka account hai to reset link bhej diya gaya hai.";
 
@@ -27,21 +26,21 @@ export async function POST(request: Request) {
   }
 
   const user = await prisma.user.findUnique({ where: { email: parsed.data.email } });
-  let developmentResetUrl: string | undefined;
+  let resetUrl: string | undefined;
   if (user) {
     const { token, tokenHash } = createResetToken();
     await prisma.passwordResetToken.deleteMany({ where: { userId: user.id } });
     await prisma.passwordResetToken.create({
       data: { userId: user.id, tokenHash, expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS) },
     });
-    const baseUrl = process.env.APP_URL ?? new URL(request.url).origin;
-    developmentResetUrl = `${baseUrl}/reset-password?token=${token}`;
+    const baseUrl = (process.env.APP_URL ?? new URL(request.url).origin).replace(/\/+$/, "");
+    resetUrl = `${baseUrl}/reset-password?token=${token}`;
     try {
       await sendPasswordResetEmail({
         to: user.email,
         name: user.name,
-        resetUrl: developmentResetUrl,
-        locale: isLocale(user.locale) ? user.locale : undefined,
+        resetUrl,
+        locale: user.locale,
       });
     } catch (error) {
       console.error("Password reset email failed", error);
@@ -50,6 +49,6 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     message: GENERIC_MESSAGE,
-    ...(process.env.NODE_ENV !== "production" && developmentResetUrl ? { developmentResetUrl } : {}),
+    ...(process.env.NODE_ENV !== "production" && resetUrl ? { developmentResetUrl: resetUrl } : {}),
   });
 }
