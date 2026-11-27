@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { MosqueIcon, MenuIcon } from "@/components/icons";
 import LogoutButton from "@/components/LogoutButton";
 import { useSidebar } from "@/components/SidebarContext";
-import { setLocaleCookie, useI18n } from "@/lib/i18n/client";
+import { saveLocale, useI18n } from "@/lib/i18n/client";
 import { LOCALE_LABELS } from "@/lib/i18n/config";
 
 export default function Header({ userName }: { userName: string }) {
@@ -44,7 +44,7 @@ export default function Header({ userName }: { userName: string }) {
           <button
             type="button"
             onClick={() => {
-              setLocaleCookie(nextLocale);
+              void saveLocale(nextLocale);
               router.refresh();
             }}
             aria-label={LOCALE_LABELS[nextLocale]}

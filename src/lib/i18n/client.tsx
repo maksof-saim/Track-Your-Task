@@ -30,3 +30,21 @@ export function useI18n(): I18nValue {
 export function setLocaleCookie(locale: Locale) {
   document.cookie = `${LOCALE_COOKIE}=${locale}; path=/; max-age=31536000; samesite=lax`;
 }
+
+/**
+ * Saves the choice on the account as well, so the same user gets it on other
+ * devices. The cookie switches the UI immediately; the network call is best
+ * effort and never blocks the refresh.
+ */
+export async function saveLocale(locale: Locale) {
+  setLocaleCookie(locale);
+  try {
+    await fetch("/api/account", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ locale }),
+    });
+  } catch {
+    // The cookie already switched this device, so a failed save is not fatal.
+  }
+}

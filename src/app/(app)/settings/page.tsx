@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { signOut } from "next-auth/react";
 import { toast } from "sonner";
-import { setLocaleCookie, useI18n } from "@/lib/i18n/client";
+import { saveLocale, useI18n } from "@/lib/i18n/client";
 import { LOCALE_LABELS, LOCALES, type Locale } from "@/lib/i18n/config";
 
 type Account = {
@@ -44,7 +44,7 @@ export default function SettingsPage() {
 
     function changeLocale(next: Locale) {
         if (next === locale) return;
-        setLocaleCookie(next);
+        void saveLocale(next);
         router.refresh();
     }
 
