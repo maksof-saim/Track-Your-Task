@@ -2,8 +2,10 @@
 
 import Link from "next/link";
 import { useState, type FormEvent } from "react";
+import { useI18n } from "@/lib/i18n/client";
 
 export default function ForgotPasswordPage() {
+  const { t } = useI18n();
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [developmentResetUrl, setDevelopmentResetUrl] = useState<string | null>(null);
@@ -16,11 +18,11 @@ export default function ForgotPasswordPage() {
 
     // Client-side validation
     if (!email.trim()) {
-      setError("Please enter your email");
+      setError(t.auth.enterEmail);
       return;
     }
     if (!email.includes("@")) {
-      setError("Please enter a valid email address");
+      setError(t.auth.enterValidEmail);
       return;
     }
 
@@ -37,13 +39,13 @@ export default function ForgotPasswordPage() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        setError(data.error ?? "Something went wrong");
+        setError(data.error ?? t.auth.somethingWrong);
       } else {
         setMessage(data.message);
         setDevelopmentResetUrl(data.developmentResetUrl ?? null);
       }
     } catch {
-      setError("Could not reach the server. Please check your internet connection and try again.");
+      setError(t.auth.serverUnreachable);
     } finally {
       setLoading(false);
     }
@@ -58,14 +60,12 @@ export default function ForgotPasswordPage() {
           className="h-12 w-auto"
         />
       </div>
-      <h2 className="mb-1 text-lg font-semibold text-foreground">Forgot Password?</h2>
-      <p className="mb-6 text-sm text-foreground/60">
-        Enter your email and we&apos;ll send you a secure reset link.
-      </p>
+      <h2 className="mb-1 text-lg font-semibold text-foreground">{t.auth.forgotTitle}</h2>
+      <p className="mb-6 text-sm text-foreground/60">{t.auth.forgotSubtitle}</p>
       <form onSubmit={submit} className="flex flex-col gap-4">
         <div>
           <label htmlFor="email" className="mb-1 block text-sm font-medium text-foreground/80">
-            Email
+            {t.auth.email}
           </label>
           <input
             id="email"
@@ -78,7 +78,7 @@ export default function ForgotPasswordPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
-            placeholder="you@example.com"
+            placeholder={t.auth.emailPlaceholder}
           />
         </div>
         {error && (
@@ -89,24 +89,19 @@ export default function ForgotPasswordPage() {
         {message && (
           <div className="text-sm text-primary-500">
             <p>{message}</p>
-            <p className="mt-1 text-xs text-foreground/60">
-              If you do not see the email within a few minutes, please check your Spam or Junk
-              folder.
-            </p>
+            <p className="mt-1 text-xs text-foreground/60">{t.auth.spamHint}</p>
           </div>
         )}
         {developmentResetUrl && (
           <div className="rounded-lg border border-gold-400/40 bg-gold-100 p-3 text-sm text-foreground">
-            <p className="mb-1 font-semibold">Local testing link:</p>
+            <p className="mb-1 font-semibold">{t.auth.localTestingLink}</p>
             <a
               href={developmentResetUrl}
               className="break-all font-medium text-primary-500 underline"
             >
-              Reset password
+              {t.auth.resetLink}
             </a>
-            <p className="mt-2 text-xs text-foreground/60">
-              In production, this link will be sent via email.
-            </p>
+            <p className="mt-2 text-xs text-foreground/60">{t.auth.inProductionEmail}</p>
           </div>
         )}
         <button
@@ -116,17 +111,17 @@ export default function ForgotPasswordPage() {
         >
           {loading ? (
             <>
-              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-              Sending link...
+              <div className="me-2 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              {t.auth.sendingLink}
             </>
           ) : (
-            "Send Reset Link"
+            t.auth.sendResetLink
           )}
         </button>
       </form>
       <p className="mt-6 text-center text-sm text-foreground/60">
         <Link href="/login" className="font-medium text-primary-500 hover:underline">
-          Back to sign in
+          {t.auth.backToSignIn}
         </Link>
       </p>
     </div>

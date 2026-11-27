@@ -21,6 +21,12 @@ export default auth((req) => {
   }
 
   if (!isLoggedIn && !isAuthPage && !isPublicPage) {
+    // APIs must answer like an API: a redirect to the sign-in page would reach
+    // fetch() as an HTML 200 and look like success.
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const loginUrl = new URL("/login", req.nextUrl.origin);
     loginUrl.searchParams.set("callbackUrl", pathname + search);
     return NextResponse.redirect(loginUrl);
