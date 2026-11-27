@@ -70,7 +70,9 @@ export default async function LandingPage() {
               priority
               className="h-8 w-8 shrink-0 rounded-lg sm:h-9 sm:w-9"
             />
-            <span className="truncate text-base font-bold text-white sm:text-lg">{SITE_NAME}</span>
+            <span className="hidden truncate text-base font-bold text-white sm:inline sm:text-lg">
+              {SITE_NAME}
+            </span>
           </Link>
           <nav aria-label={t.shell.mainAria} className="flex shrink-0 items-center gap-1 sm:gap-3">
             <Link

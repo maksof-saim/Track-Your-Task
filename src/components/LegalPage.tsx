@@ -54,7 +54,9 @@ export default async function LegalPage({
               height={32}
               className="h-8 w-8 shrink-0 rounded-lg"
             />
-            <span className="truncate text-base font-bold text-white">{SITE_NAME}</span>
+            <span className="hidden truncate text-base font-bold text-white sm:inline">
+              {SITE_NAME}
+            </span>
           </Link>
           <div className="flex shrink-0 items-center gap-1">
             <LocaleSwitch />
