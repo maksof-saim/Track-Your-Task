@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState, type FormEvent } from "react";
+import { useI18n } from "@/lib/i18n/client";
 
 export default function ResetPasswordPage() {
   return (
@@ -14,6 +15,7 @@ export default function ResetPasswordPage() {
 
 function ResetForm() {
   const params = useSearchParams();
+  const { t } = useI18n();
   const token = params.get("token") ?? "";
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
@@ -28,19 +30,19 @@ function ResetForm() {
 
     // Client-side validation
     if (!password) {
-      setError("Please enter your password");
+      setError(t.auth.enterPassword);
       return;
     }
     if (password.length < 8) {
-      setError("Password must be at least 8 characters");
+      setError(t.auth.passwordTooShort);
       return;
     }
     if (password !== confirm) {
-      setError("Passwords do not match");
+      setError(t.auth.passwordsDoNotMatch);
       return;
     }
     if (!token) {
-      setError("Invalid reset link");
+      setError(t.auth.resetLinkInvalid);
       return;
     }
 
@@ -53,10 +55,10 @@ function ResetForm() {
       });
       const data = await response.json().catch(() => ({}));
 
-      if (!response.ok) setError(data.error ?? "Reset link is invalid");
+      if (!response.ok) setError(data.error ?? t.auth.resetLinkInvalid);
       else setDone(true);
     } catch {
-      setError("Could not reach the server. Please check your internet connection and try again.");
+      setError(t.auth.serverUnreachable);
     } finally {
       setLoading(false);
     }
@@ -73,19 +75,15 @@ function ResetForm() {
           />
         </div>
         <h2 className="mb-2 text-lg font-semibold text-foreground">
-          Password updated successfully
+          {t.auth.updatedTitle}
         </h2>
-        <p className="mb-2 text-sm text-foreground/60">
-          You can now sign in with your new password.
-        </p>
-        <p className="mb-6 text-xs text-foreground/50">
-          For your security, you have been signed out of your other devices.
-        </p>
+        <p className="mb-2 text-sm text-foreground/60">{t.auth.updatedSubtitle}</p>
+        <p className="mb-6 text-xs text-foreground/50">{t.auth.signedOutOthers}</p>
         <Link
           href="/login"
           className="mt-6 block text-center font-medium text-primary-500 hover:underline"
         >
-          Sign in
+          {t.auth.signIn}
         </Link>
       </div>
     );
@@ -101,15 +99,13 @@ function ResetForm() {
         />
       </div>
       <h2 className="mb-1 text-lg font-semibold text-foreground">
-        Set New Password
+        {t.auth.resetTitle}
       </h2>
-      <p className="mb-6 text-sm text-foreground/60">
-        Create a strong password with at least 8 characters.
-      </p>
+      <p className="mb-6 text-sm text-foreground/60">{t.auth.resetSubtitle}</p>
       <form onSubmit={submit} className="flex flex-col gap-4">
         <div>
           <label htmlFor="password" className="mb-1 block text-sm font-medium text-foreground/80">
-            New Password
+            {t.auth.newPassword}
           </label>
           <div className="relative">
             <input
@@ -121,21 +117,21 @@ function ResetForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               className="w-full rounded-lg border border-border bg-surface py-2 pe-16 ps-3 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
-              placeholder="Enter new password"
+              placeholder={t.auth.newPasswordPlaceholder}
             />
             <button
               type="button"
               onClick={() => setShowPassword((value) => !value)}
-              aria-label={showPassword ? "Hide password" : "Show password"}
+              aria-label={showPassword ? t.auth.hidePassword : t.auth.showPassword}
               className="absolute inset-y-0 end-0 flex min-w-14 items-center justify-center px-3 text-xs font-medium text-foreground/60 hover:text-foreground"
             >
-              {showPassword ? "Hide" : "Show"}
+              {showPassword ? t.auth.hide : t.auth.show}
             </button>
           </div>
         </div>
         <div>
           <label htmlFor="confirm" className="mb-1 block text-sm font-medium text-foreground/80">
-            Confirm Password
+            {t.auth.confirmPassword}
           </label>
           <input
             id="confirm"
@@ -146,7 +142,7 @@ function ResetForm() {
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
             className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
-            placeholder="Confirm new password"
+            placeholder={t.auth.confirmPasswordPlaceholder}
           />
         </div>
         {error && (
@@ -161,11 +157,11 @@ function ResetForm() {
         >
           {loading ? (
             <>
-              <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-              Updating...
+              <div className="me-2 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
+              {t.auth.updating}
             </>
           ) : (
-            "Update Password"
+            t.auth.updatePassword
           )}
         </button>
       </form>
