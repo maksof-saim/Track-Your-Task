@@ -3,9 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { todayISO, getPrayerLabel } from "@/lib/prayerMeta";
+import { PRAYERS, STATUSES, todayISO } from "@/lib/prayerMeta";
 import { getPreviousDay, getNextDay, formatDisplayDate } from "@/lib/dateUtils";
-import { PRAYERS, STATUSES } from "@/lib/prayerMeta";
+import { useI18n } from "@/lib/i18n/client";
 
 type UserDetail = {
   user: {
@@ -36,6 +36,7 @@ const STATUS_STYLES: Record<string, string> = {
 export default function AdminUserDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t, locale } = useI18n();
   const userId = searchParams.get("userId");
   const initialDate = searchParams.get("date") || todayISO();
 
@@ -46,7 +47,7 @@ export default function AdminUserDetailPage() {
 
   useEffect(() => {
     if (!userId) {
-      setError("User ID is required");
+      setError(t.admin.userIdRequired);
       setLoading(false);
       return;
     }
@@ -62,7 +63,7 @@ export default function AdminUserDetailPage() {
       })
       .catch((e) => {
         setError(e.message);
-        toast.error("Failed to load user details", {
+        toast.error(t.admin.failedLoadDetails, {
           description: e.message,
         });
       })
@@ -85,20 +86,21 @@ export default function AdminUserDetailPage() {
     setDate(todayISO());
   }
 
+  const itemLabel = (map: Record<string, { label: string }>, key: string) =>
+    map[key]?.label ?? key;
+
   if (error) {
     return (
       <div className="mx-auto max-w-4xl">
         <div className="rounded-2xl border border-status-qaza/30 bg-status-qaza/5 p-8 text-center">
-          <p className="text-status-qaza font-medium">{error}</p>
-          <p className="mt-2 text-sm text-foreground/60">
-            Please select a valid record date between 29 August 2026 and the current date.
-          </p>
+          <p className="font-medium text-status-qaza">{error}</p>
+          <p className="mt-2 text-sm text-foreground/60">{t.admin.invalidDate}</p>
           <div className="mt-6 flex justify-center gap-3">
             <button
               onClick={() => router.push("/admin")}
               className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-semibold text-foreground hover:border-primary-300"
             >
-              ← Back to Admin
+              {t.admin.backToAdmin}
             </button>
             {userId && (
               <button
@@ -108,7 +110,7 @@ export default function AdminUserDetailPage() {
                 }}
                 className="rounded-lg bg-primary-500 px-4 py-2 text-sm font-semibold text-white hover:bg-primary-600"
               >
-                Go to Today
+                {t.admin.goToToday}
               </button>
             )}
           </div>
@@ -124,7 +126,9 @@ export default function AdminUserDetailPage() {
           <div className="text-center">
             <div className="mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary-500 border-t-transparent" />
             <p className="text-sm text-foreground/60">
-              {loading ? `Loading records for ${formatDisplayDate(date)}...` : "Loading user details..."}
+              {loading
+                ? t.admin.loadingRecords(formatDisplayDate(date, locale))
+                : t.admin.loadingUserDetails}
             </p>
           </div>
         </div>
@@ -143,6 +147,65 @@ export default function AdminUserDetailPage() {
     detail.hifazat.length > 0 ||
     detail.customHifazat.length > 0;
 
+  const header = (
+    <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-semibold text-foreground">{detail.user.name}</h1>
+          <p className="text-sm text-foreground/60">{detail.user.email}</p>
+          <div className="mt-2 flex gap-4 text-xs text-foreground/50">
+            <span>
+              {t.admin.role}: {detail.user.role}
+            </span>
+            <span>{t.admin.totalRecordedDays(detail.totalRecordedDays)}</span>
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            onClick={() => router.push(`/admin/40day-record?userId=${userId}`)}
+            className="rounded-lg bg-primary-500 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-600"
+          >
+            {t.admin.sevenDayRecord}
+          </button>
+          <button
+            onClick={goToPreviousDay}
+            className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300"
+          >
+            {t.common.previous}
+          </button>
+          <button
+            onClick={goToToday}
+            className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300"
+          >
+            {t.common.today}
+          </button>
+          <button
+            onClick={goToNextDay}
+            className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300"
+          >
+            {t.common.next}
+          </button>
+        </div>
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <label htmlFor="detail-date" className="text-sm font-medium text-foreground/60">
+          {t.admin.recordDate}:
+        </label>
+        <input
+          id="detail-date"
+          type="date"
+          value={date}
+          onChange={(e) => handleDateChange(e.target.value)}
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400"
+        />
+        <span className="text-sm font-medium text-primary-500">
+          {formatDisplayDate(date, locale)}
+        </span>
+      </div>
+    </div>
+  );
+
   if (!hasAnyRecords) {
     return (
       <div className="mx-auto max-w-4xl space-y-6">
@@ -151,89 +214,33 @@ export default function AdminUserDetailPage() {
             onClick={() => router.push("/admin")}
             className="flex items-center gap-2 text-sm text-foreground/60 hover:text-foreground"
           >
-            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to Admin
+            {t.admin.backToAdmin}
           </button>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div>
-              <h1 className="text-2xl font-semibold text-foreground">{detail.user.name}</h1>
-              <p className="text-sm text-foreground/60">{detail.user.email}</p>
-              <div className="mt-2 flex gap-4 text-xs text-foreground/50">
-                <span>Role: {detail.user.role}</span>
-                <span>Total Recorded Days: {detail.totalRecordedDays}</span>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => router.push(`/admin/40day-record?userId=${userId}`)}
-                className="rounded-lg bg-primary-500 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-600"
-              >
-                7-Day Record
-              </button>
-              <button
-                onClick={goToPreviousDay}
-                className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300"
-              >
-                Previous
-              </button>
-              <button
-                onClick={goToToday}
-                className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300"
-              >
-                Today
-              </button>
-              <button
-                onClick={goToNextDay}
-                className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300"
-              >
-                Next
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-4 flex items-center gap-3">
-            <label htmlFor="detail-date" className="text-sm font-medium text-foreground/60">
-              Record Date:
-            </label>
-            <input
-              id="detail-date"
-              type="date"
-              value={date}
-              onChange={(e) => handleDateChange(e.target.value)}
-              className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400"
-            />
-            <span className="text-sm font-medium text-primary-500">{formatDisplayDate(date)}</span>
-          </div>
-        </div>
+        {header}
 
         <div className="rounded-2xl border border-border bg-surface p-12 text-center">
           <div className="mb-4 text-4xl">📅</div>
-          <p className="text-lg font-medium text-foreground">No records found</p>
+          <p className="text-lg font-medium text-foreground">{t.admin.noRecords}</p>
           <p className="mt-2 text-sm text-foreground/50">
-            {detail.user.name} does not have any records for {formatDisplayDate(date)}
+            {t.admin.noUserRecords(detail.user.name, formatDisplayDate(date, locale))}
           </p>
-          <p className="mt-1 text-xs text-foreground/40">
-            Select a different date to view their records
-          </p>
+          <p className="mt-1 text-xs text-foreground/40">{t.admin.selectDifferentDate}</p>
         </div>
       </div>
     );
   }
 
-  const jamaatCount = detail.prayers.filter(p => p.status === 'JAMAAT').length;
-  const infradiCount = detail.prayers.filter(p => p.status === 'INFRADI').length;
-  const qazaCount = detail.prayers.filter(p => p.status === 'QAZA').length;
+  const jamaatCount = detail.prayers.filter((p) => p.status === "JAMAAT").length;
+  const infradiCount = detail.prayers.filter((p) => p.status === "INFRADI").length;
+  const qazaCount = detail.prayers.filter((p) => p.status === "QAZA").length;
   const totalZikrCount = detail.zikr.reduce((sum, z) => sum + z.count, 0);
   const customZikrCount = detail.customZikr.reduce((sum, z) => sum + z.count, 0);
-  const tilawatDone = detail.tilawat.filter(t => t.done).length;
-  const customTilawatDone = detail.customTilawat.filter(t => t.done).length;
-  const hifazatDone = detail.hifazat.filter(h => h.done).length;
-  const customHifazatDone = detail.customHifazat.filter(h => h.done).length;
+  const tilawatDone = detail.tilawat.filter((t) => t.done).length;
+  const customTilawatDone = detail.customTilawat.filter((t) => t.done).length;
+  const hifazatDone = detail.hifazat.filter((h) => h.done).length;
+  const customHifazatDone = detail.customHifazat.filter((h) => h.done).length;
 
   return (
     <div className="mx-auto max-w-4xl space-y-6">
@@ -243,98 +250,50 @@ export default function AdminUserDetailPage() {
           onClick={() => router.push("/admin")}
           className="flex items-center gap-2 text-sm text-foreground/60 hover:text-foreground"
         >
-          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          Back to Admin
+          {t.admin.backToAdmin}
         </button>
       </div>
 
       {/* User Info Card */}
-      <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-semibold text-foreground">{detail.user.name}</h1>
-            <p className="text-sm text-foreground/60">{detail.user.email}</p>
-            <div className="mt-2 flex gap-4 text-xs text-foreground/50">
-              <span>Role: {detail.user.role}</span>
-              <span>Total Recorded Days: {detail.totalRecordedDays}</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => router.push(`/admin/40day-record?userId=${userId}`)}
-              className="rounded-lg bg-primary-500 px-3 py-2 text-sm font-semibold text-white hover:bg-primary-600"
-            >
-              7-Day Record
-            </button>
-            <button
-              onClick={goToPreviousDay}
-              className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300"
-            >
-              Previous
-            </button>
-            <button
-              onClick={goToToday}
-              className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300"
-            >
-              Today
-            </button>
-            <button
-              onClick={goToNextDay}
-              className="rounded-lg border border-border bg-surface-muted px-3 py-2 text-sm hover:border-primary-300"
-            >
-              Next
-            </button>
-          </div>
-        </div>
-
-        {/* Date Selector */}
-        <div className="mt-4 flex items-center gap-3">
-          <label htmlFor="detail-date" className="text-sm font-medium text-foreground/60">
-            Record Date:
-          </label>
-          <input
-            id="detail-date"
-            type="date"
-            value={date}
-            onChange={(e) => handleDateChange(e.target.value)}
-            className="rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400"
-          />
-          <span className="text-sm font-medium text-primary-500">{formatDisplayDate(date)}</span>
-        </div>
-      </div>
+      {header}
 
       {/* Prayer Records */}
       <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-foreground">Namaz</h2>
+        <h2 className="mb-4 text-lg font-semibold text-foreground">{t.nav.namaz}</h2>
         <div className="mb-4 grid grid-cols-3 gap-4 rounded-xl bg-surface-muted p-4">
           <div className="text-center">
             <p className="text-2xl font-bold text-status-jamaat">{jamaatCount}</p>
-            <p className="text-xs text-foreground/60">Jamaat</p>
+            <p className="text-xs text-foreground/60">{t.meta.statuses.JAMAAT}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-status-infradi">{infradiCount}</p>
-            <p className="text-xs text-foreground/60">Infradi</p>
+            <p className="text-xs text-foreground/60">{t.meta.statuses.INFRADI}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-status-qaza">{qazaCount}</p>
-            <p className="text-xs text-foreground/60">Qaza</p>
+            <p className="text-xs text-foreground/60">{t.meta.statuses.QAZA}</p>
           </div>
         </div>
         <div className="space-y-2">
           {PRAYERS.map((prayer) => {
-            const log = detail.prayers.find(p => p.prayer === prayer.key);
+            const log = detail.prayers.find((p) => p.prayer === prayer.key);
             const status = log?.status;
             return (
-              <div key={prayer.key} className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3">
-                <span className="font-medium text-foreground">{getPrayerLabel(prayer.key, date)}</span>
+              <div
+                key={prayer.key}
+                className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3"
+              >
+                <span className="font-medium text-foreground">
+                  {t.meta.prayers[prayer.key as keyof typeof t.meta.prayers] ?? prayer.label}
+                </span>
                 {status ? (
                   <span className={`rounded-lg border px-3 py-1 text-xs font-semibold ${STATUS_STYLES[status]}`}>
-                    {STATUSES.find(s => s.key === status)?.label || status}
+                    {t.meta.statuses[status as keyof typeof t.meta.statuses] ??
+                      STATUSES.find((s) => s.key === status)?.label ??
+                      status}
                   </span>
                 ) : (
-                  <span className="text-xs text-foreground/40">Not recorded</span>
+                  <span className="text-xs text-foreground/40">{t.admin.notRecorded}</span>
                 )}
               </div>
             );
@@ -342,17 +301,22 @@ export default function AdminUserDetailPage() {
         </div>
         {detail.customPrayers.length > 0 && (
           <div className="mt-4">
-            <h3 className="mb-2 text-sm font-semibold text-foreground/70">Custom Prayers</h3>
+            <h3 className="mb-2 text-sm font-semibold text-foreground/70">
+              {t.admin.customPrayers}
+            </h3>
             <div className="space-y-2">
               {detail.customPrayers.map((cp) => (
-                <div key={cp.id} className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3">
+                <div
+                  key={cp.id}
+                  className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3"
+                >
                   <span className="font-medium text-foreground">{cp.name}</span>
                   {cp.status ? (
                     <span className={`rounded-lg border px-3 py-1 text-xs font-semibold ${STATUS_STYLES[cp.status]}`}>
-                      {STATUSES.find(s => s.key === cp.status)?.label || cp.status}
+                      {t.meta.statuses[cp.status as keyof typeof t.meta.statuses] ?? cp.status}
                     </span>
                   ) : (
-                    <span className="text-xs text-foreground/40">Not recorded</span>
+                    <span className="text-xs text-foreground/40">{t.admin.notRecorded}</span>
                   )}
                 </div>
               ))}
@@ -363,36 +327,46 @@ export default function AdminUserDetailPage() {
 
       {/* Zikr Records */}
       <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-foreground">Zikar</h2>
+        <h2 className="mb-4 text-lg font-semibold text-foreground">{t.nav.azkaar}</h2>
         <div className="mb-4 grid grid-cols-2 gap-4 rounded-xl bg-surface-muted p-4">
           <div className="text-center">
             <p className="text-2xl font-bold text-primary-500">{totalZikrCount}</p>
-            <p className="text-xs text-foreground/60">Standard Zikr</p>
+            <p className="text-xs text-foreground/60">{t.admin.standardZikr}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-primary-500">{customZikrCount}</p>
-            <p className="text-xs text-foreground/60">Custom Zikr</p>
+            <p className="text-xs text-foreground/60">{t.admin.customZikr}</p>
           </div>
         </div>
         <div className="space-y-2">
           {detail.zikr.map((z) => (
-            <div key={z.name} className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3">
+            <div
+              key={z.name}
+              className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3"
+            >
               <span className="font-medium text-foreground">{z.name}</span>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-foreground/60">{z.mode === 'KASRAT' ? 'Kasrat se' : z.count}</span>
+                <span className="text-sm text-foreground/60">
+                  {z.mode === "KASRAT" ? t.admin.kasratSe : z.count}
+                </span>
               </div>
             </div>
           ))}
         </div>
         {detail.customZikr.length > 0 && (
           <div className="mt-4">
-            <h3 className="mb-2 text-sm font-semibold text-foreground/70">Custom Zikr</h3>
+            <h3 className="mb-2 text-sm font-semibold text-foreground/70">{t.admin.customZikr}</h3>
             <div className="space-y-2">
               {detail.customZikr.map((cz) => (
-                <div key={cz.id} className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3">
+                <div
+                  key={cz.id}
+                  className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3"
+                >
                   <span className="font-medium text-foreground">{cz.name}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm text-foreground/60">{cz.mode === 'KASRAT' ? 'Kasrat se' : cz.count}</span>
+                    <span className="text-sm text-foreground/60">
+                      {cz.mode === "KASRAT" ? t.admin.kasratSe : cz.count}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -403,36 +377,52 @@ export default function AdminUserDetailPage() {
 
       {/* Tilawat Records */}
       <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-foreground">Tilawat</h2>
+        <h2 className="mb-4 text-lg font-semibold text-foreground">{t.admin.tilawat}</h2>
         <div className="mb-4 flex items-center gap-4 rounded-xl bg-surface-muted p-4">
           <div className="text-center">
             <p className="text-2xl font-bold text-primary-500">{tilawatDone}</p>
-            <p className="text-xs text-foreground/60">Standard Completed</p>
+            <p className="text-xs text-foreground/60">{t.admin.standardCompleted}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-primary-500">{customTilawatDone}</p>
-            <p className="text-xs text-foreground/60">Custom Completed</p>
+            <p className="text-xs text-foreground/60">{t.admin.customCompleted}</p>
           </div>
         </div>
         <div className="space-y-2">
-          {detail.tilawat.map((t) => (
-            <div key={t.item} className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3">
-              <span className="font-medium text-foreground">{t.item}</span>
-              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${t.done ? 'bg-green-100 text-green-700' : 'bg-surface-muted text-foreground/40'}`}>
-                {t.done ? 'Done' : 'Not Done'}
+          {detail.tilawat.map((item) => (
+            <div
+              key={item.item}
+              className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3"
+            >
+              <span className="font-medium text-foreground">
+                {itemLabel(t.meta.tilawat, item.item)}
+              </span>
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  item.done ? "bg-green-100 text-green-700" : "bg-surface-muted text-foreground/40"
+                }`}
+              >
+                {item.done ? t.admin.done : t.admin.notDone}
               </span>
             </div>
           ))}
         </div>
         {detail.customTilawat.length > 0 && (
           <div className="mt-4">
-            <h3 className="mb-2 text-sm font-semibold text-foreground/70">Custom Tilawat</h3>
+            <h3 className="mb-2 text-sm font-semibold text-foreground/70">{t.admin.customTilawat}</h3>
             <div className="space-y-2">
               {detail.customTilawat.map((ct) => (
-                <div key={ct.id} className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3">
+                <div
+                  key={ct.id}
+                  className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3"
+                >
                   <span className="font-medium text-foreground">{ct.name}</span>
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${ct.done ? 'bg-green-100 text-green-700' : 'bg-surface-muted text-foreground/40'}`}>
-                    {ct.done ? 'Done' : 'Not Done'}
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      ct.done ? "bg-green-100 text-green-700" : "bg-surface-muted text-foreground/40"
+                    }`}
+                  >
+                    {ct.done ? t.admin.done : t.admin.notDone}
                   </span>
                 </div>
               ))}
@@ -443,39 +433,55 @@ export default function AdminUserDetailPage() {
 
       {/* Hifazat Records */}
       <div className="rounded-2xl border border-border bg-surface p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-foreground">Hifazat</h2>
+        <h2 className="mb-4 text-lg font-semibold text-foreground">{t.admin.hifazat}</h2>
         <div className="mb-4 flex items-center gap-4 rounded-xl bg-surface-muted p-4">
           <div className="text-center">
             <p className="text-2xl font-bold text-primary-500">{hifazatDone}</p>
-            <p className="text-xs text-foreground/60">Standard Completed</p>
+            <p className="text-xs text-foreground/60">{t.admin.standardCompleted}</p>
           </div>
           <div className="text-center">
             <p className="text-2xl font-bold text-primary-500">{customHifazatDone}</p>
-            <p className="text-xs text-foreground/60">Custom Completed</p>
+            <p className="text-xs text-foreground/60">{t.admin.customCompleted}</p>
           </div>
         </div>
         <div className="space-y-2">
-          {detail.hifazat.map((h) => (
-            <div key={h.item} className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3">
-              <span className="font-medium text-foreground">{h.item}</span>
-              <span className={`rounded-full px-3 py-1 text-xs font-semibold ${h.done ? 'bg-green-100 text-green-700' : 'bg-surface-muted text-foreground/40'}`}>
-                {h.done ? 'Done' : 'Not Done'}
+          {detail.hifazat.map((item) => (
+            <div
+              key={item.item}
+              className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3"
+            >
+              <span className="font-medium text-foreground">
+                {itemLabel(t.meta.hifazat, item.item)}
+              </span>
+              <span
+                className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                  item.done ? "bg-green-100 text-green-700" : "bg-surface-muted text-foreground/40"
+                }`}
+              >
+                {item.done ? t.admin.done : t.admin.notDone}
               </span>
             </div>
           ))}
         </div>
         {detail.customHifazat.length > 0 && (
           <div className="mt-4">
-            <h3 className="mb-2 text-sm font-semibold text-foreground/70">Custom Hifazat</h3>
+            <h3 className="mb-2 text-sm font-semibold text-foreground/70">{t.admin.customHifazat}</h3>
             <div className="space-y-2">
               {detail.customHifazat.map((ch) => (
-                <div key={ch.id} className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3">
+                <div
+                  key={ch.id}
+                  className="flex items-center justify-between rounded-lg border border-border bg-surface-muted p-3"
+                >
                   <div>
                     <span className="font-medium text-foreground">{ch.name}</span>
                     {ch.hint && <p className="text-xs text-foreground/50">{ch.hint}</p>}
                   </div>
-                  <span className={`rounded-full px-3 py-1 text-xs font-semibold ${ch.done ? 'bg-green-100 text-green-700' : 'bg-surface-muted text-foreground/40'}`}>
-                    {ch.done ? 'Done' : 'Not Done'}
+                  <span
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${
+                      ch.done ? "bg-green-100 text-green-700" : "bg-surface-muted text-foreground/40"
+                    }`}
+                  >
+                    {ch.done ? t.admin.done : t.admin.notDone}
                   </span>
                 </div>
               ))}
