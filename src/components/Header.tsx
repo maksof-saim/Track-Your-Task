@@ -1,14 +1,18 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { MosqueIcon, MenuIcon } from "@/components/icons";
 import LogoutButton from "@/components/LogoutButton";
 import { useSidebar } from "@/components/SidebarContext";
-import { useI18n } from "@/lib/i18n/client";
+import { saveLocale, useI18n } from "@/lib/i18n/client";
+import { LOCALE_LABELS } from "@/lib/i18n/config";
 
 export default function Header({ userName }: { userName: string }) {
   const { toggle } = useSidebar();
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
+  const router = useRouter();
+  const nextLocale = locale === "ur" ? "en" : "ur";
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 bg-primary-600 text-white shadow-md sm:sticky sm:z-20 sm:shadow-sm">
@@ -37,6 +41,19 @@ export default function Header({ userName }: { userName: string }) {
           <span className="hidden text-sm text-white/85 sm:inline">
             {t.header.greeting}, {userName}
           </span>
+          <button
+            type="button"
+            onClick={() => {
+              void saveLocale(nextLocale);
+              router.refresh();
+            }}
+            aria-label={LOCALE_LABELS[nextLocale]}
+            title={LOCALE_LABELS[nextLocale]}
+            lang={nextLocale}
+            className="flex h-9 min-w-11 shrink-0 items-center justify-center rounded-full border border-white/35 px-2.5 text-xs font-semibold text-white transition-colors hover:bg-white/10"
+          >
+            {LOCALE_LABELS[nextLocale]}
+          </button>
           <LogoutButton />
         </div>
       </div>

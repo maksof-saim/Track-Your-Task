@@ -19,11 +19,12 @@ export const authConfig = {
           if (user.id) {
             const record = await prisma.user.findUnique({
               where: { id: user.id },
-              select: { sessionVersion: true, role: true },
+              select: { sessionVersion: true, role: true, locale: true },
             });
             if (record) {
               token.sv = record.sessionVersion;
               token.role = record.role;
+              token.locale = record.locale;
             }
           }
         } catch (error) {
@@ -41,7 +42,7 @@ export const authConfig = {
         const record = token.id
           ? await prisma.user.findUnique({
               where: { id: token.id as string },
-              select: { sessionVersion: true, role: true },
+              select: { sessionVersion: true, role: true, locale: true },
             })
           : null;
 
@@ -54,6 +55,7 @@ export const authConfig = {
 
         token.sv = tokenVersion;
         token.role = record.role;
+        token.locale = record.locale;
         token.checkedAt = now;
       } catch (error) {
         // Do not sign everyone out because of a temporary database problem.
@@ -66,6 +68,7 @@ export const authConfig = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as "USER" | "ADMIN";
+        session.user.locale = (token.locale as string | undefined) ?? "en";
       }
       return session;
     },

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { todayISO, formatDisplayDate } from "@/lib/prayerMeta";
 import { AZKAAR_TARGET_ITEMS } from "@/lib/checklistMeta";
 import { isFutureDate, getPreviousDay, getNextDay } from "@/lib/dateUtils";
+import { useI18n } from "@/lib/i18n/client";
 
 type ZikrMode = "COUNT" | "KASRAT";
 type ZikrEntry = { name: string; count: number; mode: ZikrMode };
@@ -38,6 +39,7 @@ function parseDraft(draft: Draft): { mode: ZikrMode; count: number } | null {
 }
 
 export default function ZikrPage() {
+  const { t, locale } = useI18n();
   const [date, setDate] = useState(todayISO());
   const [entries, setEntries] = useState<ZikrEntry[]>([]);
   const [customZikrs, setCustomZikrs] = useState<CustomZikr[]>([]);
@@ -49,8 +51,8 @@ export default function ZikrPage() {
 
   function handleDateChange(newDate: string) {
     if (isFutureDate(newDate)) {
-      toast.error("Cannot select future date", {
-        description: "Please select today or a past date.",
+      toast.error(t.zikr.toast.futureDate, {
+        description: t.zikr.toast.futureDateHint,
       });
       return;
     }
@@ -86,8 +88,8 @@ export default function ZikrPage() {
         // Clear the old date's values so they cannot be saved under the new date by mistake.
         setEntries([]);
         setDrafts(buildDrafts([], []));
-        toast.error("Could not load your zikr", {
-          description: "Please check your internet connection and refresh the page.",
+        toast.error(t.zikr.toast.loadFail, {
+          description: t.zikr.toast.loadFailHint,
         });
       })
       .finally(() => {
@@ -110,7 +112,7 @@ export default function ZikrPage() {
     event.preventDefault();
     const name = newName.trim();
     if (!name) {
-      toast.error("Please enter a name for your zikr");
+      toast.error(t.zikr.toast.noName);
       return;
     }
 
@@ -124,14 +126,14 @@ export default function ZikrPage() {
       const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
-        toast.error("Could not add zikr", { description: data.error || "Please try again." });
+        toast.error(t.zikr.toast.addFail, { description: data.error || t.zikr.toast.addFailHint });
         return;
       }
 
       setCustomZikrs((current) => [...current, { id: data.id, name: data.name }]);
       setDrafts((current) => ({ ...current, [customKey(data.id)]: initialDraft() }));
       setNewName("");
-      toast.success("Zikr added", { description: data.name });
+      toast.success(t.zikr.toast.addSuccess, { description: data.name });
     } catch {
       toast.error("Could not add zikr", {
         description: "Please check your internet connection and try again.",
@@ -150,7 +152,7 @@ export default function ZikrPage() {
     try {
       const response = await fetch(`/api/custom/zikrs/${custom.id}`, { method: "DELETE" });
       if (!response.ok) {
-        toast.error("Could not remove zikr", { description: "Please try again." });
+        toast.error(t.zikr.toast.removeFail, { description: t.zikr.toast.removeFailHint });
         return;
       }
 
@@ -161,7 +163,7 @@ export default function ZikrPage() {
         return next;
       });
       setEntries((current) => current.filter((entry) => entry.name !== custom.name));
-      toast.success("Zikr removed");
+      toast.success(t.zikr.toast.removeSuccess);
     } catch {
       toast.error("Could not remove zikr", {
         description: "Please check your internet connection and try again.",
@@ -177,7 +179,7 @@ export default function ZikrPage() {
         body: JSON.stringify({ date, ...body }),
       });
       if (!response.ok) {
-        toast.error("Could not clear zikr", { description: "Please try again." });
+        toast.error(t.zikr.toast.clearFail, { description: t.zikr.toast.clearFailHint });
         return;
       }
 
@@ -194,7 +196,7 @@ export default function ZikrPage() {
         );
         setDrafts((current) => ({ ...current, [customKey(customZikrId)]: initialDraft() }));
       }
-      toast.success("Zikr record cleared");
+      toast.success(t.zikr.toast.clear);
     } catch {
       toast.error("Could not clear zikr", {
         description: "Please check your internet connection and try again.",
@@ -214,8 +216,8 @@ export default function ZikrPage() {
 
     const total = builtIn.length + custom.length;
     if (total === 0) {
-      toast.error("No zikr to save", {
-        description: "Please enter at least one zikr count.",
+      toast.error(t.zikr.toast.noToSave, {
+        description: t.zikr.toast.noToSaveHint,
       });
       return;
     }
@@ -252,15 +254,15 @@ export default function ZikrPage() {
         .catch(() => null);
       if (refreshed?.entries) setEntries(refreshed.entries);
 
-      toast.success("All zikr saved successfully!", {
-        description: `${total} zikr recorded.`,
+      toast.success(t.zikr.toast.saved, {
+        description: t.zikr.toast.savedHint(total),
       });
     } catch (error) {
       const message =
         error instanceof Error && error.message !== "Failed to fetch"
           ? error.message
-          : "Please try again.";
-      toast.error("Failed to save zikr", { description: message });
+          : t.zikr.toast.failedHint;
+      toast.error(t.zikr.toast.failed, { description: message });
     } finally {
       setPending(null);
     }
@@ -271,10 +273,10 @@ export default function ZikrPage() {
       <div className="mb-6 flex flex-col gap-4 sm:mb-8">
         <div>
           <p className="mb-1 text-xs font-semibold uppercase tracking-[0.18em] text-primary-500">
-            Daily ibadah
+            {t.zikr.eyebrow}
           </p>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Azkaar</h1>
-          <p className="mt-1 text-sm text-foreground/60">Record your daily zikr</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t.zikr.title}</h1>
+          <p className="mt-1 text-sm text-foreground/60">{t.zikr.subtitle}</p>
         </div>
 
         <div className="rounded-xl border border-border bg-surface-muted/50 p-4 sm:p-5">
@@ -286,8 +288,8 @@ export default function ZikrPage() {
                 </svg>
               </div>
               <div>
-                <p className="text-xs font-medium text-foreground/60">Selected Date</p>
-                <p className="text-sm font-semibold text-foreground">{formatDisplayDate(date)}</p>
+                <p className="text-xs font-medium text-foreground/60">{t.zikr.selectedDateLabel}</p>
+                <p className="text-sm font-semibold text-foreground">{formatDisplayDate(date, locale)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -295,26 +297,26 @@ export default function ZikrPage() {
                 onClick={() => handleDateChange(getPreviousDay(date))}
                 className="rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-primary-300 transition-colors"
               >
-                ← Previous
+                {t.common.previous}
               </button>
               <button
                 onClick={() => handleDateChange(todayISO())}
                 className="rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-primary-300 transition-colors"
               >
-                Today
+                {t.common.today}
               </button>
               <button
                 onClick={() => handleDateChange(getNextDay(date))}
                 disabled={isFutureDate(getNextDay(date))}
                 className="rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-primary-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Next →
+                {t.common.next}
               </button>
             </div>
           </div>
           <div className="mt-3 flex items-center gap-2">
             <label htmlFor="zikr-date" className="text-xs font-medium text-foreground/60">
-              Or select specific date:
+              {t.zikr.selectDateHint}
             </label>
             <input
               id="zikr-date"
@@ -344,9 +346,9 @@ export default function ZikrPage() {
         })}
 
         <div className="pt-4">
-          <h2 className="text-lg font-semibold text-foreground">My azkaar</h2>
+          <h2 className="text-lg font-semibold text-foreground">{t.zikr.myAzkaar}</h2>
           <p className="mb-3 mt-1 text-sm text-foreground/60">
-            Add your own zikr to record alongside the daily azkaar.
+            {t.zikr.addZikrHint}
           </p>
 
           <form onSubmit={addCustomZikr} className="mb-4 flex gap-2">
@@ -355,8 +357,8 @@ export default function ZikrPage() {
               value={newName}
               onChange={(event) => setNewName(event.target.value)}
               maxLength={100}
-              placeholder="Name of your zikr"
-              aria-label="Name of your zikr"
+              placeholder={t.zikr.zikrPlaceholder}
+              aria-label={t.zikr.zikrPlaceholder}
               className="min-w-0 flex-1 rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary-400 focus:ring-2 focus:ring-primary-100"
             />
             <button
@@ -398,10 +400,10 @@ export default function ZikrPage() {
             {pending === "all" ? (
               <>
                 <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-                Saving...
+              {t.zikr.saveButton.saving}
               </>
             ) : (
-              "Save All Zikr"
+              t.zikr.saveButton.default
             )}
           </button>
         </div>
@@ -427,33 +429,34 @@ function ZikrCard({
   onClear?: () => void;
   onRemove?: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <section className="rounded-xl border border-border bg-surface p-4 shadow-sm">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="break-words text-base font-semibold text-foreground">{title}</h2>
           <p className="mt-1 text-xs text-foreground/55">
-            {entry?.mode === "KASRAT" ? "Kasrat se saved" : `Today's count: ${entry?.count ?? 0}`}
+            {entry?.mode === "KASRAT" ? t.zikr.kasratSaved : t.zikr.todayCount(entry?.count ?? 0)}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-1">
           {onClear && (
-            <button
-              type="button"
-              onClick={onClear}
-              className="rounded-lg px-2 py-1 text-xs font-medium text-foreground/50 hover:text-status-qaza hover:underline"
-            >
-              Clear
-            </button>
+                          <button
+                type="button"
+                onClick={onClear}
+                className="rounded-lg px-2 py-1 text-xs font-medium text-foreground/50 hover:text-status-qaza hover:underline"
+              >
+                {t.zikr.clear}
+              </button>
           )}
           {onRemove && (
-            <button
-              type="button"
-              onClick={onRemove}
-              className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-status-qaza hover:underline"
-            >
-              Remove
-            </button>
+                          <button
+                type="button"
+                onClick={onRemove}
+                className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-status-qaza hover:underline"
+              >
+                {t.zikr.remove}
+              </button>
           )}
         </div>
       </div>
@@ -468,8 +471,8 @@ function ZikrCard({
             className="h-4 w-4 accent-primary-500"
           />
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-medium text-foreground">Apna count</span>
-            <span className="block text-xs text-foreground/55">How many times?</span>
+            <span className="block text-sm font-medium text-foreground">{t.zikr.cancelLabel}</span>
+            <span className="block text-xs text-foreground/55">{t.zikr.cancelHint}</span>
           </span>
           <input
             type="number"
@@ -492,8 +495,8 @@ function ZikrCard({
             className="h-4 w-4 accent-primary-500"
           />
           <span>
-            <span className="block text-sm font-medium text-foreground">Kasrat se</span>
-            <span className="block text-xs text-foreground/55">More than 300</span>
+            <span className="block text-sm font-medium text-foreground">{t.zikr.kasratLabel}</span>
+            <span className="block text-xs text-foreground/55">{t.zikr.kasratHint}</span>
           </span>
         </label>
       </div>

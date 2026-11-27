@@ -3,6 +3,7 @@ import { compare } from "bcryptjs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { allowRequest, hashKey } from "@/lib/rate-limit";
+import { isLocale } from "@/lib/i18n/config";
 
 export async function GET() {
   const session = await auth();
@@ -25,6 +26,27 @@ export async function GET() {
     createdAt: user.createdAt.toISOString(),
     hasPassword: Boolean(user.passwordHash),
   });
+}
+
+export async function PATCH(request: Request) {
+  const session = await auth();
+  if (!session?.user?.id) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = await request.json().catch(() => null);
+  const locale = body && typeof body === "object" ? body.locale : null;
+  if (!isLocale(locale)) {
+    return NextResponse.json({ error: "Unsupported locale" }, { status: 400 });
+  }
+
+  // Only ever touch the signed-in user's own row; the body cannot name a user.
+  await prisma.user.update({
+    where: { id: session.user.id },
+    data: { locale },
+  });
+
+  return NextResponse.json({ ok: true, locale });
 }
 
 export async function DELETE(request: Request) {

@@ -24,7 +24,7 @@ export default async function AppLayout({
           lang={locale}
           dir={localeDir(locale)}
           data-locale={locale}
-          className="flex min-h-screen flex-1 flex-col pt-16 sm:pt-0"
+          className={`flex min-h-screen flex-1 flex-col sm:pt-0 ${locale === "ur" ? "pt-20" : "pt-16"}`}
         >
           <Header userName={userName} />
           <div className="flex min-w-0 flex-1">

@@ -3,9 +3,10 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { PRAYERS, STATUSES, getPrayerStatuses, todayISO, formatDisplayDate, getPrayerLabel, type PrayerKey, type StatusKey } from "@/lib/prayerMeta";
+import { PRAYERS, STATUSES, getPrayerStatuses, todayISO, formatDisplayDate, isFriday, type PrayerKey, type StatusKey } from "@/lib/prayerMeta";
 import AddCustomItem from "@/components/AddCustomItem";
 import { isFutureDate, getPreviousDay, getNextDay } from "@/lib/dateUtils";
+import { useI18n } from "@/lib/i18n/client";
 
 type EntryMap = Partial<Record<PrayerKey, StatusKey>>;
 type CustomPrayer = { id: string; name: string };
@@ -26,6 +27,9 @@ function getJson(url: string) {
 
 export default function PrayerPage() {
   const router = useRouter();
+  const { t, locale } = useI18n();
+  const prayerLabel = (key: PrayerKey, iso: string) =>
+    key === "DHUHR" && isFriday(iso) ? t.meta.prayers.JUMMAH : t.meta.prayers[key];
   const [date, setDate] = useState(todayISO());
   const [entries, setEntries] = useState<EntryMap>({});
   const [customPrayers, setCustomPrayers] = useState<CustomPrayer[]>([]);
@@ -35,8 +39,8 @@ export default function PrayerPage() {
 
   function handleDateChange(newDate: string) {
     if (isFutureDate(newDate)) {
-      toast.error("Cannot select future date", {
-        description: "Please select today or a past date.",
+      toast.error(t.prayer.toast.futureDate, {
+        description: t.prayer.toast.futureDateHint,
       });
       return;
     }
@@ -74,8 +78,8 @@ export default function PrayerPage() {
         // Clear the old date's values so they cannot be saved under the new date by mistake.
         setEntries({});
         setCustomEntries({});
-        toast.error("Could not load your prayer record", {
-          description: "Please check your internet connection and refresh the page.",
+        toast.error(t.prayer.toast.loadFail, {
+          description: t.prayer.toast.loadFailHint,
         });
       })
       .finally(() => {
@@ -115,7 +119,7 @@ export default function PrayerPage() {
     try {
       const res = await fetch(`/api/custom/prayers/${prayer.id}`, { method: "DELETE" });
       if (!res.ok) {
-        toast.error("Could not remove prayer", { description: "Please try again." });
+        toast.error(t.prayer.toast.removeFail, { description: t.prayer.toast.removeFailHint });
         return;
       }
       setCustomPrayers((prev) => prev.filter((item) => item.id !== prayer.id));
@@ -124,10 +128,10 @@ export default function PrayerPage() {
         delete next[prayer.id];
         return next;
       });
-      toast.success("Prayer removed");
-    } catch {
-      toast.error("Could not remove prayer", {
-        description: "Please check your internet connection and try again.",
+      toast.success(t.prayer.toast.removeSuccess);
+        } catch {
+      toast.error(t.prayer.toast.removeFail, {
+        description: t.prayer.toast.removeFailHint,
       });
     }
   }
@@ -140,7 +144,7 @@ export default function PrayerPage() {
         body: JSON.stringify({ date, ...body }),
       });
       if (!res.ok) {
-        toast.error("Could not clear record", { description: "Please try again." });
+        toast.error(t.prayer.toast.clearFail, { description: t.prayer.toast.clearFailHint });
         return;
       }
 
@@ -160,10 +164,10 @@ export default function PrayerPage() {
           return next;
         });
       }
-      toast.success("Record cleared");
+            toast.success(t.prayer.toast.clear);
     } catch {
-      toast.error("Could not clear record", {
-        description: "Please check your internet connection and try again.",
+      toast.error(t.prayer.toast.clearFail, {
+        description: t.prayer.toast.clearFailHint,
       });
     }
   }
@@ -173,8 +177,8 @@ export default function PrayerPage() {
     const customFilled = customPrayers.filter((p) => customEntries[p.id]);
 
     if (filled.length === 0 && customFilled.length === 0) {
-      toast.error("Please select at least one prayer status", {
-        description: "Choose a status for at least one prayer.",
+      toast.error(t.prayer.toast.selectOne, {
+        description: t.prayer.toast.selectOneHint,
       });
       return;
     }
@@ -218,19 +222,19 @@ export default function PrayerPage() {
 
       if (failed) {
         const data = await failed.json().catch(() => ({}));
-        toast.error("Failed to save prayer record", {
-          description: data.error || "Please try again.",
+        toast.error(t.prayer.toast.failed, {
+          description: data.error || t.prayer.toast.failedHint,
         });
         return;
       }
 
-      toast.success("Prayer record saved successfully!", {
-        description: "Your prayer status has been recorded.",
+      toast.success(t.prayer.toast.saved, {
+        description: t.prayer.toast.savedHint,
       });
       setTimeout(() => router.push("/dashboard"), 1500);
     } catch {
-      toast.error("Failed to save prayer record", {
-        description: "Please check your internet connection and try again.",
+      toast.error(t.prayer.toast.failed, {
+        description: t.prayer.toast.failedHint,
       });
     } finally {
       setSaving(false);
@@ -243,9 +247,9 @@ export default function PrayerPage() {
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex flex-col gap-4 sm:mb-8">
         <div>
-          <h1 className="text-xl font-semibold text-foreground">Prayer Record</h1>
+          <h1 className="text-xl font-semibold text-foreground">{t.prayer.title}</h1>
           <p className="text-sm text-foreground/60">
-            Select prayer status and save your record
+            {t.prayer.subtitle}
           </p>
         </div>
 
@@ -258,8 +262,8 @@ export default function PrayerPage() {
                 </svg>
               </div>
               <div>
-                <p className="text-xs font-medium text-foreground/60">Selected Date</p>
-                <p className="text-sm font-semibold text-foreground">{formatDisplayDate(date)}</p>
+                <p className="text-xs font-medium text-foreground/60">{t.prayer.selectedDateLabel}</p>
+                <p className="text-sm font-semibold text-foreground">{formatDisplayDate(date, locale)}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -267,26 +271,26 @@ export default function PrayerPage() {
                 onClick={() => handleDateChange(getPreviousDay(date))}
                 className="rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-primary-300 transition-colors"
               >
-                ← Previous
+                {t.common.previous}
               </button>
               <button
                 onClick={() => handleDateChange(todayISO())}
                 className="rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-primary-300 transition-colors"
               >
-                Today
+                {t.common.today}
               </button>
               <button
                 onClick={() => handleDateChange(getNextDay(date))}
                 disabled={isFutureDate(getNextDay(date))}
                 className="rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-primary-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Next →
+                {t.common.next}
               </button>
             </div>
           </div>
           <div className="mt-3 flex items-center gap-2">
             <label htmlFor="prayer-date" className="text-xs font-medium text-foreground/60">
-              Or select specific date:
+              {t.prayer.selectDateHint}
             </label>
             <input
               id="prayer-date"
@@ -300,7 +304,7 @@ export default function PrayerPage() {
       </div>
 
       <div className="mb-4 flex items-center justify-between rounded-xl border border-border bg-surface-muted px-4 py-2.5 text-sm text-foreground/70">
-        <span>{loggedCount}/{PRAYERS.length} recorded</span>
+        <span>{t.prayer.recordedCount(loggedCount, PRAYERS.length)}</span>
       </div>
 
       <div className={`flex flex-col gap-3 ${loading ? "opacity-50" : ""}`}>
@@ -309,7 +313,7 @@ export default function PrayerPage() {
             key={prayer.key}
             className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between"
           >
-            <span className="text-base font-medium text-foreground">{getPrayerLabel(prayer.key, date)}</span>
+            <span className="text-base font-medium text-foreground">{prayerLabel(prayer.key, date)}</span>
             <div className={`grid gap-2 ${getPrayerStatuses(prayer.key).length === 1 ? "grid-cols-1" : "grid-cols-3"}`}>
               {getPrayerStatuses(prayer.key).map((status) => {
                 const active = entries[prayer.key] === status.key;
@@ -318,13 +322,13 @@ export default function PrayerPage() {
                     key={status.key}
                     type="button"
                     onClick={() => setStatus(prayer.key, status.key)}
-                    title={status.hint}
+                    title={t.meta.statusHints[status.key]}
                     className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-colors sm:text-sm ${active
                       ? STATUS_STYLES[status.key]
                       : "border-border text-foreground/50 hover:border-primary-300 hover:text-foreground"
                       }`}
                   >
-                    {status.label}
+                    {t.meta.statuses[status.key]}
                   </button>
                 );
               })}
@@ -335,7 +339,7 @@ export default function PrayerPage() {
                 onClick={() => clearEntry({ prayer: prayer.key })}
                 className="self-start rounded-lg px-2 py-1 text-xs font-medium text-foreground/50 hover:text-status-qaza hover:underline sm:self-auto"
               >
-                Clear
+                {t.prayer.clear}
               </button>
             )}
           </div>
@@ -345,7 +349,7 @@ export default function PrayerPage() {
       {/* Custom Prayers Section */}
       {customPrayers.length > 0 && (
         <div className="mt-6">
-          <h2 className="mb-3 text-sm font-semibold text-foreground/70">Custom Prayers</h2>
+          <h2 className="mb-3 text-sm font-semibold text-foreground/70">{t.prayer.customHeading}</h2>
           <div className={`flex flex-col gap-3 ${loading ? "opacity-50" : ""}`}>
             {customPrayers.map((prayer) => (
               <div
@@ -360,7 +364,7 @@ export default function PrayerPage() {
                       onClick={() => clearEntry({ customPrayerId: prayer.id })}
                       className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-foreground/50 hover:text-status-qaza hover:underline"
                     >
-                      Clear
+                      {t.prayer.clear}
                     </button>
                   )}
                   <button
@@ -368,7 +372,7 @@ export default function PrayerPage() {
                     onClick={() => removeCustomPrayer(prayer)}
                     className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-status-qaza hover:underline"
                   >
-                    Remove
+                    {t.prayer.remove}
                   </button>
                 </div>
                 <div className="grid grid-cols-3 gap-2">
@@ -379,13 +383,13 @@ export default function PrayerPage() {
                         key={status.key}
                         type="button"
                         onClick={() => setCustomStatus(prayer.id, status.key)}
-                        title={status.hint}
+                        title={t.meta.statusHints[status.key]}
                         className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-colors sm:text-sm ${active
                           ? STATUS_STYLES[status.key]
                           : "border-border text-foreground/50 hover:border-primary-300 hover:text-foreground"
                           }`}
                       >
-                        {status.label}
+                        {t.meta.statuses[status.key]}
                       </button>
                     );
                   })}
@@ -401,7 +405,20 @@ export default function PrayerPage() {
         <AddCustomItem
           type="prayer"
           onAdd={addCustomPrayer}
-          placeholder="e.g., Salat ul Tawbah, Sunnah, etc."
+          placeholder={t.prayer.addCustom.placeholder}
+          labels={{
+            open: t.prayer.addCustom.open,
+            name: t.prayer.addCustom.name,
+            hint: t.prayer.addCustom.hint,
+            add: t.prayer.addCustom.add,
+            adding: t.prayer.addCustom.adding,
+            cancel: t.prayer.addCustom.cancel,
+            nameRequired: t.prayer.addCustom.nameRequired,
+            nameTooShort: t.prayer.addCustom.nameTooShort,
+            added: t.prayer.addCustom.added,
+            addFail: t.prayer.addCustom.addFail,
+            addFailHint: t.prayer.addCustom.addFailHint,
+          }}
         />
       </div>
 
@@ -414,10 +431,10 @@ export default function PrayerPage() {
           {saving ? (
             <>
               <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-              Saving...
+              {t.prayer.saveButton.saving}
             </>
           ) : (
-            "Save Prayer Record"
+            t.prayer.saveButton.default
           )}
         </button>
       </div>

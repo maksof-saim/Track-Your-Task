@@ -44,12 +44,21 @@ export function isoDateDaysAgo(days: number): string {
   return `${y}-${m}-${d}`;
 }
 
-export function formatDisplayDate(iso: string): string {
+const LOCALE_TAGS = { en: "en-GB", ur: "ur-PK" } as const;
+
+export function formatDisplayDate(iso: string, locale: "en" | "ur" = "en"): string {
   const [y, m, d] = iso.split("-").map(Number);
-  return new Date(y, m - 1, d).toLocaleDateString("en-GB", {
+  return new Date(y, m - 1, d).toLocaleDateString(LOCALE_TAGS[locale], {
     weekday: "short",
     day: "2-digit",
     month: "short",
+  });
+}
+
+export function formatWeekday(iso: string, locale: "en" | "ur" = "en"): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString(LOCALE_TAGS[locale], {
+    weekday: "short",
   });
 }
 
