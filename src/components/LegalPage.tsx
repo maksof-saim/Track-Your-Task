@@ -26,7 +26,17 @@ export default async function LegalPage({
   updated: string;
   children: React.ReactNode;
 }) {
-  const t = getDictionary(await getLocale()).public.shell;
+  const locale = await getLocale();
+  const t = getDictionary(locale).public.shell;
+  // The stored date is an English label; render it in the reader's language.
+  const parsed = new Date(updated);
+  const updatedLabel = Number.isNaN(parsed.getTime())
+    ? updated
+    : parsed.toLocaleDateString(locale === "ur" ? "ur-PK" : "en-GB", {
+        day: "2-digit",
+        month: "long",
+        year: "numeric",
+      });
 
   return (
     <div className="min-h-screen overflow-x-clip bg-[#f6f3ea] text-[#23302c]">
@@ -61,7 +71,7 @@ export default async function LegalPage({
 
       <main className="mx-auto max-w-3xl px-5 py-10 sm:px-6 sm:py-14">
         <h1 className="text-3xl leading-tight font-bold text-[#084538] sm:text-4xl">{title}</h1>
-        <p className="mt-2 text-sm text-[#66726d]">{t.lastUpdated(updated)}</p>
+        <p className="mt-2 text-sm text-[#66726d]">{t.lastUpdated(updatedLabel)}</p>
         {children}
       </main>
 

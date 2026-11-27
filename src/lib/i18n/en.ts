@@ -1,3 +1,14 @@
+export type LegalCopy = {
+  title: string;
+  intro: string;
+  sections: Array<{
+    heading: string;
+    paragraphs?: string[];
+    bullets?: string[];
+    after?: string[];
+  }>;
+};
+
 export const en = {
   nav: {
     namaz: "Namaz",
@@ -361,6 +372,146 @@ export const en = {
       disclaimerTail: "to record your daily prayers and Qaza in Track Your Amaal.",
     },
   },
+  privacy: {
+    title: "Privacy Policy",
+    intro:
+      "This Privacy Policy explains what information {site} collects, how it is used and the choices you have. By creating an account you agree to the practices described here.",
+    sections: [
+      {
+        heading: "1. Information we collect",
+        bullets: [
+          "Account information: your name, email address and password. Your password is stored only as a secure one-way hash, so we cannot read it.",
+          "Worship records: the information you enter into the app, such as prayer status (Jamaat, Infradi or Qaza), dhikr counts, tilawat and hifazat checklists, and any custom items you create, together with the dates they relate to.",
+          "Technical information: a session cookie that keeps you signed in, basic server logs (for example request times and error messages) that we use to keep the service running, and privacy-focused page-view statistics provided by our hosting platform.",
+        ],
+      },
+      {
+        heading: "2. How we use your information",
+        bullets: [
+          "To provide the app, store your records and show your summaries.",
+          "To send you a password reset email when you request one.",
+          "To protect the service, prevent abuse and fix errors.",
+        ],
+        paragraphs: [
+          "{site} does not show advertisements and does not sell or rent your personal information.",
+        ],
+      },
+      {
+        heading: "3. Who can see your records",
+        paragraphs: [
+          "Your records are linked to your account and are not visible to other users. The administrators of {site} can view user accounts and worship records through an administration area, in order to support users and to run the service.",
+        ],
+      },
+      {
+        heading: "4. Service providers",
+        paragraphs: ["We use the following providers to run the service:"],
+        bullets: [
+          "Vercel, for hosting the website and application.",
+          "Neon, for the database. Your data is stored on servers located in the United States.",
+          "Google Gmail, for sending password reset emails. Your email address and the reset link pass through this service.",
+          "Upstash, for short-lived security counters (stored as anonymous hashes) that limit repeated login and sign-up attempts.",
+        ],
+        after: ["These providers process information only to provide their services to us."],
+      },
+      {
+        heading: "5. Cookies",
+        paragraphs: [
+          "We use one essential cookie to keep you signed in. We do not use advertising cookies or cross-site tracking.",
+        ],
+      },
+      {
+        heading: "6. Retention and deletion",
+        paragraphs: [
+          "We keep your account and records for as long as your account exists. You can delete your account and all associated records at any time from the Account page after you sign in. You can also ask us to do it by emailing {email}, and we will do so within a reasonable time.",
+        ],
+      },
+      { heading: "7. Security", paragraphs: ["Passwords are stored as hashes and connections to the service are encrypted with HTTPS. No online service is completely secure, so please choose a strong password and keep it private."] },
+      {
+        heading: "8. Your choices",
+        paragraphs: [
+          "You can download a copy of your records from the Account page. You can also ask us to correct or delete your information by emailing {email}.",
+        ],
+      },
+      {
+        heading: "9. Children",
+        paragraphs: [
+          "{site} is not directed to children under 13. If you believe a child has given us personal information, please contact us and we will remove it.",
+        ],
+      },
+      {
+        heading: "10. Changes to this policy",
+        paragraphs: [
+          "We may update this policy from time to time. The date at the top of this page shows when it was last changed.",
+        ],
+      },
+      { heading: "11. Contact", paragraphs: ["Questions about this policy can be sent to {email}."] },
+    ],
+  } satisfies LegalCopy,
+  terms: {
+    title: "Terms of Use",
+    intro:
+      "These terms apply when you use {site}. By creating an account or using the service you agree to them.",
+    sections: [
+      {
+        heading: "1. About the service",
+        paragraphs: [
+          "{site} is a tool for recording your own worship, such as prayers, dhikr, tilawat and hifazat. It is provided for personal, non-commercial use.",
+        ],
+      },
+      {
+        heading: "2. Your account",
+        bullets: [
+          "Provide accurate information when you register.",
+          "Keep your password private. You are responsible for activity under your account.",
+          "Tell us if you think someone has accessed your account without permission.",
+        ],
+      },
+      {
+        heading: "3. Acceptable use",
+        paragraphs: ["You agree not to:"],
+        bullets: [
+          "use the service for anything unlawful;",
+          "try to access other peoples accounts or data;",
+          "disrupt the service or send automated or abusive traffic to it.",
+        ],
+      },
+      {
+        heading: "4. Religious content",
+        paragraphs: [
+          "{site} is a personal tracking tool and is not a source of religious rulings. Texts, reminders and labels in the app are provided for convenience. Please consult qualified scholars for religious guidance, and verify any text before relying on it.",
+        ],
+      },
+      {
+        heading: "5. Availability",
+        paragraphs: [
+          "The service is provided as it is. It may change, be interrupted or be unavailable from time to time. We take care to keep your records safe, but you should not rely on the service as the only copy of anything important to you.",
+        ],
+      },
+      {
+        heading: "6. Your data",
+        paragraphs: ["How we handle your information is described in our Privacy Policy."],
+      },
+      {
+        heading: "7. Ending your use",
+        paragraphs: [
+          "You can stop using the service at any time and ask us to delete your account. We may suspend or remove accounts that break these terms.",
+        ],
+      },
+      {
+        heading: "8. Limits on our responsibility",
+        paragraphs: [
+          "To the extent allowed by law, we are not responsible for loss or damage that results from using, or being unable to use, the service.",
+        ],
+      },
+      {
+        heading: "9. Changes to these terms",
+        paragraphs: [
+          "We may update these terms from time to time. The date at the top of this page shows when they were last changed. Continuing to use the service after a change means you accept the updated terms.",
+        ],
+      },
+      { heading: "10. Contact", paragraphs: ["Questions about these terms can be sent to {email}."] },
+    ],
+  } satisfies LegalCopy,
   auth: {
     signInTitle: "Sign In",
     signInSubtitle: "Sign in to view your worship records",
