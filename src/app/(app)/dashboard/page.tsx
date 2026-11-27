@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { PRAYERS, formatDisplayDate, getPrayerLabel, todayISO } from "@/lib/prayerMeta";
+import { PRAYERS, formatDisplayDate, isFriday, todayISO } from "@/lib/prayerMeta";
 import { ChartIcon, PrayerIcon, TasbihIcon, BookIcon, ShieldIcon } from "@/components/icons";
 import { useI18n } from "@/lib/i18n/client";
 
@@ -54,6 +54,8 @@ function streakLabel(grid: Analytics["grid"], days: string): string {
 
 export default function DashboardPage() {
   const { t } = useI18n();
+  const prayerLabel = (key: (typeof PRAYERS)[number]["key"], iso: string) =>
+    key === "DHUHR" && isFriday(iso) ? t.meta.prayers.JUMMAH : t.meta.prayers[key];
   const [data, setData] = useState<Analytics | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -175,10 +177,10 @@ export default function DashboardPage() {
                   key={prayer.key}
                   className="mb-1 grid grid-cols-[70px_repeat(14,1fr)] items-center gap-1"
                 >
-                  <span className="text-xs text-foreground/60">{prayer.label}</span>
+                  <span className="text-xs text-foreground/60">{t.meta.prayers[prayer.key]}</span>
                   {data.grid.map((day) => {
                     const status = day.statuses[prayer.key];
-                    const dayLabel = getPrayerLabel(prayer.key, day.date);
+                    const dayLabel = prayerLabel(prayer.key, day.date);
                     return (
                       <span
                         key={day.date}

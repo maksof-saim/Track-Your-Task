@@ -54,6 +54,12 @@ export default function ChecklistPage({
 }) {
   const router = useRouter();
   const { t } = useI18n();
+  const metaItems = (section === "TILAWAT" ? t.meta.tilawat : t.meta.hifazat) as Record<
+    string,
+    { label: string; hint?: string }
+  >;
+  const itemLabel = (key: string) => metaItems[key]?.label;
+  const itemHint = (key: string) => metaItems[key]?.hint;
   const config = {
     TILAWAT: {
       path: "/api/custom/tilawats",
@@ -380,13 +386,15 @@ export default function ChecklistPage({
                 }`}
             >
               <span>
-                <span className="font-medium text-foreground">{item.label}</span>
+                <span className="font-medium text-foreground">{itemLabel(item.key) ?? item.label}</span>
                 {item.fridayOnly && (
                   <span className="ms-2 rounded-full bg-gold-100 ps-2 pe-0.5 text-[11px] font-medium text-gold-600">
                     {t.checklist.fridayOnly}
                   </span>
                 )}
-                {item.hint && <p className="text-xs text-foreground/50">{item.hint}</p>}
+                {(itemHint(item.key) ?? item.hint) && (
+                  <p className="text-xs text-foreground/50">{itemHint(item.key) ?? item.hint}</p>
+                )}
               </span>
               <input
                 type="checkbox"

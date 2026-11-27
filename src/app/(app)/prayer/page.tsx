@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { PRAYERS, STATUSES, getPrayerStatuses, todayISO, formatDisplayDate, getPrayerLabel, type PrayerKey, type StatusKey } from "@/lib/prayerMeta";
+import { PRAYERS, STATUSES, getPrayerStatuses, todayISO, formatDisplayDate, isFriday, type PrayerKey, type StatusKey } from "@/lib/prayerMeta";
 import AddCustomItem from "@/components/AddCustomItem";
 import { isFutureDate, getPreviousDay, getNextDay } from "@/lib/dateUtils";
 import { useI18n } from "@/lib/i18n/client";
@@ -28,6 +28,8 @@ function getJson(url: string) {
 export default function PrayerPage() {
   const router = useRouter();
   const { t } = useI18n();
+  const prayerLabel = (key: PrayerKey, iso: string) =>
+    key === "DHUHR" && isFriday(iso) ? t.meta.prayers.JUMMAH : t.meta.prayers[key];
   const [date, setDate] = useState(todayISO());
   const [entries, setEntries] = useState<EntryMap>({});
   const [customPrayers, setCustomPrayers] = useState<CustomPrayer[]>([]);
@@ -311,7 +313,7 @@ export default function PrayerPage() {
             key={prayer.key}
             className="flex flex-col gap-3 rounded-xl border border-border bg-surface p-4 sm:flex-row sm:items-center sm:justify-between"
           >
-            <span className="text-base font-medium text-foreground">{getPrayerLabel(prayer.key, date)}</span>
+            <span className="text-base font-medium text-foreground">{prayerLabel(prayer.key, date)}</span>
             <div className={`grid gap-2 ${getPrayerStatuses(prayer.key).length === 1 ? "grid-cols-1" : "grid-cols-3"}`}>
               {getPrayerStatuses(prayer.key).map((status) => {
                 const active = entries[prayer.key] === status.key;
@@ -320,13 +322,13 @@ export default function PrayerPage() {
                     key={status.key}
                     type="button"
                     onClick={() => setStatus(prayer.key, status.key)}
-                    title={status.hint}
+                    title={t.meta.statusHints[status.key]}
                     className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-colors sm:text-sm ${active
                       ? STATUS_STYLES[status.key]
                       : "border-border text-foreground/50 hover:border-primary-300 hover:text-foreground"
                       }`}
                   >
-                    {status.label}
+                    {t.meta.statuses[status.key]}
                   </button>
                 );
               })}
@@ -381,13 +383,13 @@ export default function PrayerPage() {
                         key={status.key}
                         type="button"
                         onClick={() => setCustomStatus(prayer.id, status.key)}
-                        title={status.hint}
+                        title={t.meta.statusHints[status.key]}
                         className={`rounded-lg border px-3 py-2 text-xs font-semibold transition-colors sm:text-sm ${active
                           ? STATUS_STYLES[status.key]
                           : "border-border text-foreground/50 hover:border-primary-300 hover:text-foreground"
                           }`}
                       >
-                        {status.label}
+                        {t.meta.statuses[status.key]}
                       </button>
                     );
                   })}
@@ -404,6 +406,19 @@ export default function PrayerPage() {
           type="prayer"
           onAdd={addCustomPrayer}
           placeholder={t.prayer.addCustom.placeholder}
+          labels={{
+            open: t.prayer.addCustom.open,
+            name: t.prayer.addCustom.name,
+            hint: t.prayer.addCustom.hint,
+            add: t.prayer.addCustom.add,
+            adding: t.prayer.addCustom.adding,
+            cancel: t.prayer.addCustom.cancel,
+            nameRequired: t.prayer.addCustom.nameRequired,
+            nameTooShort: t.prayer.addCustom.nameTooShort,
+            added: t.prayer.addCustom.added,
+            addFail: t.prayer.addCustom.addFail,
+            addFailHint: t.prayer.addCustom.addFailHint,
+          }}
         />
       </div>
 
