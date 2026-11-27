@@ -1,6 +1,8 @@
 import type { Dictionary } from "./en";
 
+
 export const ur: Dictionary = {
+
   nav: {
     namaz: "نماز",
     azkaar: "اذکار",
@@ -12,20 +14,29 @@ export const ur: Dictionary = {
     mainAria: "مرکزی فہرست",
     closeMenuAria: "مینو بند کریں",
   },
+
   header: {
     greeting: "السلام علیکم",
     menuAria: "مینو کھولیں",
     logout: "لاگ آؤٹ",
   },
+
   footer: {
     account: "اکاؤنٹ",
     privacy: "پرائیویسی پالیسی",
     terms: "شرائطِ استعمال",
   },
+
   settings: {
     language: "زبان",
     languageHint: "ایپ کی زبان منتخب کریں۔",
   },
+  common: {
+    previous: "پچھلا",
+    today: "آج",
+    next: "اگلا",
+  },
+
   dashboard: {
     title: "تجزیہ",
     subtitle: "آپ کی عبادات کا خلاصہ",
@@ -55,4 +66,144 @@ export const ur: Dictionary = {
       empty: "خالی",
     },
   },
+
+  prayer: {
+    title: "نماز کا ریکارڈ",
+    subtitle: "نماز کا حال منتخب کریں اور ریکارڈ محفوظ کریں",
+    selectedDateLabel: "منتخب شدہ تاریخ",
+    selectDateHint: "یا مخصوص تاریخ منتخب کریں:",
+    recordedCount: (logged: number, total: number) => `${logged}/${total} ریکارڈ شدہ`,
+    clear: "حذف",
+    remove: "حذف",
+    customHeading: "مخصوص نمازیں",
+    addCustom: {
+      placeholder: "جیسے: صلاۃ التوبة، سنن وغیرہ",
+    },
+    saveButton: {
+      saving: "محفوظ ہو رہا ہے...",
+      default: "نماز کا ریکارڈ محفوظ کریں",
+    },
+    toast: {
+      selectOne: "کم از کم ایک نماز کا حال منتخب کریں",
+      selectOneHint: "کم از کم ایک نماز کے لیے حال چنیں۔",
+      saved: "نماز کا ریکارڈ کامیابی سے محفوظ ہو گیا!",
+      savedHint: "آپ کا نماز کا حال ریکارڈ ہو گیا ہے۔",
+      failed: "نماز کا ریکارڈ محفوظ کرنے میں ناکام",
+      failedHint: "براہ کرم انٹرنیٹ کنکشن چیک کریں اور صفحہ دوبارہ لوڈ کریں۔",
+      clear: "ریکارڈ حذف",
+      clearFail: "ریکارڈ حذف نہیں ہو سکا",
+      clearFailHint: "براہ کرم دوبارہ کوشش کریں۔",
+      futureDate: "مستقبل کی تاریخ منتخب نہیں کر سکتے",
+      futureDateHint: "براہ کرم آج یا پچھلی تاریخ منتخب کریں۔",
+      loadFail: "آپ کا نماز کا ریکارڈ لوڈ نہیں ہو سکا",
+      loadFailHint: "براہ کرم انٹرنیٹ کنکشن چیک کریں اور صفحہ دوبارہ لوڈ کریں۔",
+      removeFail: "نماز حذف نہیں ہو سکا",
+      removeFailHint: "براہ کرم دوبارہ کوشش کریں۔",
+      removeSuccess: "نماز حذف",
+    },
+  },
+
+  zikr: {
+    eyebrow: "روزانہ عبادات",
+    title: "اذکار",
+    subtitle: "آپ کے روزانہ کے ذکر کا ریکارڈ کریں",
+    selectedDateLabel: "منتخب شدہ تاریخ",
+    selectDateHint: "یا مخصوص تاریخ منتخب کریں:",
+    myAzkaar: "میری ذکار",
+    addZikrHint: "دن کے ذکار کے ساتھ ساتھ ریکارڈ کے لیے اپنے ذکر شامل کریں۔",
+    zikrPlaceholder: "اپنے ذکر کا نام",
+    addButton: {
+      adding: "شامل ہو رہا ہے...",
+      default: "شامل",
+    },
+    cancelLabel: "اپنا گنتی",
+    cancelHint: "کتنے بارے؟",
+    kasratLabel: "کسرت سے",
+    kasratHint: "300 سے زیادہ",
+    kasratSaved: "کسرت سے محفوظ",
+    todayCount: (count: number) => `آج کی گنتی: ${count}`,
+    saveButton: {
+      saving: "محفوظ ہو رہا ہے...",
+      default: "تمام ذکر محفوظ کریں",
+    },
+    clear: "حذف",
+    remove: "حذف",
+    toast: {
+      futureDate: "مستقبل کی تاریخ منتخب نہیں کر سکتے",
+      futureDateHint: "براہ کرم آج یا پچھلی تاریخ منتخب کریں۔",
+      noName: "اپنے ذکر کا نام درج کریں",
+      addSuccess: "ذکر شامل",
+      loadFail: "آپ کا ذکر لوڈ نہیں ہو سکا",
+      loadFailHint: "براہ کرم انٹرنیٹ کنکشن چیک کریں اور صفحہ دوبارہ لوڈ کریں۔",
+      noToSave: "محفوظ کرنے کے لیے کوئی ذکر نہیں",
+      noToSaveHint: "کم از کم ایک ذکر گنتی درج کریں۔",
+      saved: "تمام ذکر کامیابی سے محفوظ ہو گئے!",
+      savedHint: (total: number) => `${total} ذکر ریکارڈ ہو گئے۔`,
+      failed: "ذکر محفوظ کرنے میں ناکام",
+      failedHint: "براہ کرم انٹرنیٹ کنکشن چیک کریں اور صفحہ دوبارہ لوڈ کریں۔",
+      clearFail: "ذکر حذف نہیں ہو سکا",
+      clearFailHint: "براہ کرم دوبارہ کوشش کریں۔",
+      clear: "ذکر ریکارڈ حذف",
+      removeFail: "ذکر حذف نہیں ہو سکا",
+      removeFailHint: "براہ کرم دوبارہ کوشش کریں۔",
+      removeSuccess: "ذکر حذف",
+      addFail: "ذکر شامل نہیں ہو سکا",
+      addFailHint: "براہ کرم دوبارہ کوشش کریں۔",
+    },
+  },
+
+  tilawat: {
+    title: "تلاوت",
+    subtitle: "قرآن کی تلاوت اور یاد شدہ سورتیں ٹریک کریں",
+  },
+  hifazat: {
+    title: "حفاظت",
+    subtitle: "آنکھ، کان اور زبان کی حفاظت ٹریک کریں",
+  },
+  checklist: {
+    hintLabel: "یا مخصوص تاریخ منتخب کریں:",
+    selectedDateLabel: "منتخب شدہ تاریخ",
+    recordedCount: (done: number, total: number) => `${done}/${total} مکمل`,
+    clearRecord: "ریکارڈ حذف",
+    clearRecordConfirm: "اس روز کا محفوظ شدہ ریکارڈ حذف کریں؟ آپ کی چیک لسٹ خالی ہو جائے گی۔",
+    removeConfirm: (name: string) => `کیا آپ "${name}" حذف کرنا چاہتے ہیں؟ اس کے محفوظ شدہ ریکارڈ بھی حذف ہو جائیں گے۔`,
+    addOwnItemsHint: "دن کی فہرست کے ساتھ ساتھ ریکارڈ کے لیے اپنی چیزوں شامل کریں۔",
+    addButton: {
+      adding: "شامل ہو رہا ہے...",
+      default: "شامل",
+    },
+    removeButton: "حذف",
+    saveButton: {
+      saving: "محفوظ ہو رہا ہے...",
+      saved: (title: string) => `${title} محفوظ ہو گیا`,
+    },
+    customHeadingTilawat: "میری تلاوت",
+    addCustomPlaceholderTilawat: "اپنی تلاوت کا نام",
+    customHeadingHifazat: "میری حفاظت",
+    addCustomPlaceholderHifazat: "اپنی حفاظت کی چیز شامل کریں",
+    toast: {
+      futureDate: "مستقبل کی تاریخ منتخب نہیں کر سکتے",
+      futureDateHint: "براہ کرم آج یا پچھلی تاریخ منتخب کریں۔",
+      noName: "نام درج کریں",
+      noItem: "کم از کم ایک چیز منتخب کریں",
+      noItemHint: (section: string) => `کم از کم ایک ${section.toLowerCase()} کی چیز منتخب کریں۔`,
+      saved: (title: string) => `${title} کامیابی سے محفوظ ہو گیا!`,
+      savedHint: "آپ کا ریکارڈ اپ ڈیٹ ہو گیا ہے۔",
+      failed: "ریکارڈ محفوظ کرنے میں ناکام",
+      failedHint: "براہ کرم انٹرنیٹ کنکشن چیک کریں اور دوبارہ کوشش کریں۔",
+      clear: "ریکارڈ حذف",
+      clearFail: "ریکارڈ حذف نہیں ہو سکا",
+      clearFailHint: "براہ کرم دوبارہ کوشش کریں۔",
+      addSuccess: "چیز شامل",
+      addFail: "چیز شامل نہیں ہو سکا",
+      addFailHint: "براہ کرم دوبارہ کوشش کریں۔",
+      removeSuccess: "چیز حذف",
+      removeFail: "چیز حذف نہیں ہو سکا",
+      removeFailHint: "براہ کرم دوبارہ کوشش کریں۔",
+      loadFail: "آپ کا ریکارڈ لوڈ نہیں ہو سکا",
+      loadFailHint: "براہ کرم انٹرنیٹ کنکشن چیک کریں اور صفحہ دوبارہ لوڈ کریں۔",
+    },
+    fridayOnly: "جمعہ کے لیے",
+  },
+
 };

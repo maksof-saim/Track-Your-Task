@@ -194,7 +194,7 @@ export default function DashboardPage() {
                   key={custom.id}
                   className="mb-1 grid grid-cols-[70px_repeat(14,1fr)] items-center gap-1"
                 >
-                  <span className="truncate pr-1 text-xs text-foreground/60" title={custom.name}>
+                  <span className="truncate pe-1 text-xs text-foreground/60" title={custom.name}>
                     {custom.name}
                   </span>
                   {data.grid.map((day) => {

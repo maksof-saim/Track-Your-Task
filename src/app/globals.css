@@ -101,6 +101,12 @@ body {
   line-height: 1.9;
 }
 
+/* Nastaliq ascenders/descenders need taller heading lines than Tailwind's fixed text-* line-heights. */
+[data-locale="ur"] :is(h1, h2, h3) {
+  line-height: 1.9;
+  padding-block: 0.15em;
+}
+
 button,
 a,
 input,

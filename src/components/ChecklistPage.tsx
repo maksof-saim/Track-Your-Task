@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import { useI18n } from "@/lib/i18n/client";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { todayISO, formatDisplayDate } from "@/lib/prayerMeta";
@@ -52,7 +53,21 @@ export default function ChecklistPage({
   items: readonly ChecklistItemDef[];
 }) {
   const router = useRouter();
-  const config = CUSTOM_CONFIG[section];
+  const { t } = useI18n();
+  const config = {
+    TILAWAT: {
+      path: "/api/custom/tilawats",
+      listKey: "customTilawats",
+      heading: t.checklist.customHeadingTilawat ?? "My tilawat",
+      placeholder: t.checklist.addCustomPlaceholderTilawat ?? "Name of your tilawat",
+    },
+    HIFAZAT: {
+      path: "/api/custom/hifazats",
+      listKey: "customHifazats",
+      heading: t.checklist.customHeadingHifazat ?? "My hifazat",
+      placeholder: t.checklist.addCustomPlaceholderHifazat ?? "Name of your hifazat item",
+    },
+  }[section];
   const [date, setDate] = useState(todayISO());
   const [done, setDone] = useState<Record<string, boolean>>({});
   const [customItems, setCustomItems] = useState<CustomItem[]>([]);
@@ -64,8 +79,8 @@ export default function ChecklistPage({
 
   function handleDateChange(newDate: string) {
     if (isFutureDate(newDate)) {
-      toast.error("Cannot select future date", {
-        description: "Please select today or a past date.",
+      toast.error(t.checklist.toast.futureDate, {
+        description: t.checklist.toast.futureDateHint,
       });
       return;
     }
@@ -105,8 +120,8 @@ export default function ChecklistPage({
         // Clear the old date's values so they cannot be saved under the new date by mistake.
         setDone({});
         setHasRecord(false);
-        toast.error("Could not load your record", {
-          description: "Please check your internet connection and refresh the page.",
+        toast.error(t.checklist.toast.loadFail, {
+          description: t.checklist.toast.loadFailHint,
         });
       })
       .finally(() => {
@@ -126,7 +141,7 @@ export default function ChecklistPage({
     event.preventDefault();
     const name = newName.trim();
     if (!name) {
-      toast.error("Please enter a name");
+      toast.error(t.checklist.toast.noName);
       return;
     }
 
@@ -140,16 +155,16 @@ export default function ChecklistPage({
       const data = await res.json().catch(() => ({}));
 
       if (!res.ok) {
-        toast.error("Could not add item", { description: data.error || "Please try again." });
+        toast.error(t.checklist.toast.addFail, { description: data.error || t.checklist.toast.addFailHint });
         return;
       }
 
       setCustomItems((prev) => [...prev, { id: data.id, name: data.name, hint: data.hint }]);
       setNewName("");
-      toast.success("Item added", { description: data.name });
+      toast.success(t.checklist.toast.addSuccess, { description: data.name });
     } catch {
-      toast.error("Could not add item", {
-        description: "Please check your internet connection and try again.",
+      toast.error(t.checklist.toast.addFail, {
+        description: t.checklist.toast.addFailHint,
       });
     } finally {
       setAdding(false);
@@ -157,15 +172,13 @@ export default function ChecklistPage({
   }
 
   async function removeCustomItem(item: CustomItem) {
-    const confirmed = window.confirm(
-      `Remove "${item.name}"? Its saved records will also be deleted.`,
-    );
+    const confirmed = window.confirm(t.checklist.removeConfirm(item.name));
     if (!confirmed) return;
 
     try {
       const res = await fetch(`${config.path}/${item.id}`, { method: "DELETE" });
       if (!res.ok) {
-        toast.error("Could not remove item", { description: "Please try again." });
+        toast.error(t.checklist.toast.removeFail, { description: t.checklist.toast.removeFailHint });
         return;
       }
 
@@ -175,17 +188,17 @@ export default function ChecklistPage({
         delete next[customKey(item.id)];
         return next;
       });
-      toast.success("Item removed");
+      toast.success(t.checklist.toast.removeSuccess);
     } catch {
-      toast.error("Could not remove item", {
-        description: "Please check your internet connection and try again.",
+      toast.error(t.checklist.toast.removeFail, {
+        description: t.checklist.toast.removeFailHint,
       });
     }
   }
 
   async function clearRecord() {
     const confirmed = window.confirm(
-      "Clear the saved record for this day? Your checklist will be empty.",
+      t.checklist.clearRecordConfirm,
     );
     if (!confirmed) return;
 
@@ -196,15 +209,15 @@ export default function ChecklistPage({
         body: JSON.stringify({ date, section, clearAll: true }),
       });
       if (!res.ok) {
-        toast.error("Could not clear record", { description: "Please try again." });
+        toast.error(t.checklist.toast.clearFail, { description: t.checklist.toast.clearFailHint });
         return;
       }
       setDone({});
       setHasRecord(false);
-      toast.success("Record cleared");
+      toast.success(t.checklist.toast.clear);
     } catch {
-      toast.error("Could not clear record", {
-        description: "Please check your internet connection and try again.",
+      toast.error(t.checklist.toast.clearFail, {
+        description: t.checklist.toast.clearFailHint,
       });
     }
   }
@@ -217,8 +230,8 @@ export default function ChecklistPage({
     // A first save needs at least one item. If a record already exists, saving with
     // everything unchecked is allowed, so a mistake can be corrected.
     if (checkedCount === 0 && !hasRecord) {
-      toast.error("Please select at least one item", {
-        description: `Mark at least one ${section.toLowerCase()} item as done.`,
+      toast.error(t.checklist.toast.noItem, {
+        description: t.checklist.toast.noItemHint(section),
       });
       return;
     }
@@ -260,19 +273,19 @@ export default function ChecklistPage({
 
       if (failed) {
         const data = await failed.json().catch(() => ({}));
-        toast.error("Failed to save record", {
-          description: data.error || "Please try again.",
+        toast.error(t.checklist.toast.failed, {
+          description: data.error || t.checklist.toast.failedHint,
         });
         return;
       }
 
-      toast.success(`${title} saved successfully!`, {
-        description: "Your record has been updated.",
+      toast.success(t.checklist.toast.saved(title), {
+        description: t.checklist.toast.savedHint,
       });
       setTimeout(() => router.push("/dashboard"), 1500);
     } catch {
-      toast.error("Failed to save record", {
-        description: "Please check your internet connection and try again.",
+      toast.error(t.checklist.toast.failed, {
+        description: t.checklist.toast.failedHint,
       });
     } finally {
       setSaving(false);
@@ -303,7 +316,7 @@ export default function ChecklistPage({
                 </svg>
               </div>
               <div>
-                <p className="text-xs font-medium text-foreground/60">Selected Date</p>
+                <p className="text-xs font-medium text-foreground/60">{t.checklist.selectedDateLabel}</p>
                 <p className="text-sm font-semibold text-foreground">{formatDisplayDate(date)}</p>
               </div>
             </div>
@@ -312,26 +325,26 @@ export default function ChecklistPage({
                 onClick={() => handleDateChange(getPreviousDay(date))}
                 className="rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-primary-300 transition-colors"
               >
-                ← Previous
+                {t.common.previous}
               </button>
               <button
                 onClick={() => handleDateChange(todayISO())}
                 className="rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-primary-300 transition-colors"
               >
-                Today
+                {t.common.today}
               </button>
               <button
                 onClick={() => handleDateChange(getNextDay(date))}
                 disabled={isFutureDate(getNextDay(date))}
                 className="rounded-lg border border-border bg-surface px-3 py-2 text-sm hover:border-primary-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                Next →
+                {t.common.next}
               </button>
             </div>
           </div>
           <div className="mt-3 flex items-center gap-2">
             <label htmlFor="checklist-date" className="text-xs font-medium text-foreground/60">
-              Or select specific date:
+              {t.checklist.hintLabel}
             </label>
             <input
               id="checklist-date"
@@ -344,15 +357,15 @@ export default function ChecklistPage({
         </div>
       </div>
 
-      <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-muted px-4 py-2.5 text-sm text-foreground/70">
-        <span>{doneCount}/{totalCount} completed</span>
+      <div className="mb-4 flex items-center justify-between gap-3 rounded-xl border border-border bg-surface-muted ps-4 pe-2.5 text-sm text-foreground/70">
+        <span>{t.checklist.recordedCount(doneCount, totalCount)}</span>
         {hasRecord && (
           <button
             type="button"
             onClick={clearRecord}
             className="text-xs font-medium text-foreground/50 hover:text-status-qaza hover:underline"
           >
-            Clear record
+            {t.checklist.clearRecord}
           </button>
         )}
       </div>
@@ -369,8 +382,8 @@ export default function ChecklistPage({
               <span>
                 <span className="font-medium text-foreground">{item.label}</span>
                 {item.fridayOnly && (
-                  <span className="ml-2 rounded-full bg-gold-100 px-2 py-0.5 text-[11px] font-medium text-gold-600">
-                    Friday Only
+                  <span className="ms-2 rounded-full bg-gold-100 ps-2 pe-0.5 text-[11px] font-medium text-gold-600">
+                    {t.checklist.fridayOnly}
                   </span>
                 )}
                 {item.hint && <p className="text-xs text-foreground/50">{item.hint}</p>}
@@ -390,7 +403,7 @@ export default function ChecklistPage({
       <div className="mt-8">
         <h2 className="text-lg font-semibold text-foreground">{config.heading}</h2>
         <p className="mb-3 mt-1 text-sm text-foreground/60">
-          Add your own items to record alongside the daily list.
+          {t.checklist.addOwnItemsHint}
         </p>
 
         <form onSubmit={addCustomItem} className="mb-4 flex gap-2">
@@ -408,7 +421,7 @@ export default function ChecklistPage({
             disabled={adding}
             className="shrink-0 rounded-lg bg-primary-500 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-600 disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {adding ? "Adding..." : "Add"}
+            {adding ? t.checklist.addButton.adding : t.checklist.addButton.default}
           </button>
         </form>
 
@@ -433,9 +446,9 @@ export default function ChecklistPage({
               <button
                 type="button"
                 onClick={() => removeCustomItem(item)}
-                className="shrink-0 rounded-lg px-2 py-1 text-xs font-medium text-status-qaza hover:underline"
+                className="shrink-0 rounded-lg ps-2 pe-1 text-xs font-medium text-status-qaza hover:underline"
               >
-                Remove
+                {t.checklist.removeButton}
               </button>
             </div>
           ))}
@@ -451,10 +464,10 @@ export default function ChecklistPage({
           {saving ? (
             <>
               <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white" />
-              Saving...
+              {t.checklist.saveButton.saving}
             </>
           ) : (
-            `Save ${title}`
+            t.checklist.saveButton.saved(title)
           )}
         </button>
       </div>
