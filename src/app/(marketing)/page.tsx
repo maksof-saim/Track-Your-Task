@@ -1,12 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import Image from "next/image";
 import Link from "next/link";
-import { SITE_NAME } from "@/lib/site";
+import { SITE_NAME, SITE_URL } from "@/lib/site";
 import { getDictionary } from "@/lib/i18n/dictionaries";
 import { getLocale } from "@/lib/i18n/server";
 import LocaleSwitch from "@/components/LocaleSwitch";
 
-const SITE_URL = process.env.APP_URL ?? "https://track-your-amaal.vercel.app";
 const TITLE = "Track Your Amaal – Salah, Dhikr & Quran Habit Tracker";
 const DESCRIPTION =
   "Track your daily salah (jamaat, individual or qaza), dhikr, Quran reading and self-accountability in one simple tracker. Start in a minute.";
