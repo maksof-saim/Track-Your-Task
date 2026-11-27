@@ -217,6 +217,150 @@ export const en = {
       ZABAN: { label: "Zaban ki Hifazat", hint: "Jhoot, ghibat, fuzool baaton se bachna" },
     },
   },
+  public: {
+    shell: {
+      mainAria: "Main",
+      footerAria: "Footer",
+      homeAria: (site: string) => `${site} home`,
+      signIn: "Sign in",
+      getStarted: "Get started",
+      createAccount: "Create account",
+      tools: "Tools",
+      home: "Home",
+      privacy: "Privacy Policy",
+      terms: "Terms of Use",
+      lastUpdated: (date: string) => `Last updated: ${date}`,
+    },
+    home: {
+      eyebrow: "Prayers and zikr tracker",
+      title: "Build the habit of worship, one day at a time",
+      subtitle:
+        "Track your daily salah, dhikr, Quran reading and self-accountability in one place, and watch your consistency grow.",
+      createAccount: "Create your account",
+      signIn: "Sign in",
+      featuresHeading: "Everything you need for your daily amaal",
+      features: [
+        {
+          title: "Salah tracking",
+          text: "Mark each of the five daily prayers as Jamaat, Infradi (individual) or Qaza, and see your whole day at a glance.",
+        },
+        {
+          title: "Dhikr counter",
+          text: "Count your daily adhkar, with a Kasrat mode for high-volume dhikr.",
+        },
+        {
+          title: "Quran and tilawat",
+          text: "A daily checklist for recitation, Surah Yaseen, Waqiah, Mulk and the Friday Surah Kahf, with key Surahs to read inside the app.",
+        },
+        {
+          title: "Hifazat",
+          text: "A daily self-review for guarding your eyes, ears and tongue, with a short reminder for each.",
+        },
+      ],
+      stepsHeading: "How it works",
+      steps: [
+        { title: "Create your account", text: "Sign up with your email in under a minute." },
+        { title: "Mark your day", text: "Record your prayers, dhikr, tilawat and hifazat as you go." },
+        { title: "Review and improve", text: "See where you are consistent and where you can do better." },
+      ],
+      toolsHeading: "Useful tools, no account needed",
+      tasbeehTitle: "Online Tasbeeh Counter",
+      tasbeehText: "Count your dhikr with one tap and keep your progress on your device.",
+      qazaTitle: "Qaza Prayer Calculator",
+      qazaText: "Estimate your missed prayers and plan how to make them up.",
+      finalHeading: "Start tracking your amaal today",
+      finalText:
+        "Small, consistent deeds are beloved to Allah. Make them easy to see and easy to keep.",
+      getStarted: "Get started",
+      footerTagline: "Track your daily prayers and zikr",
+      copyright: (year: number) => `© ${year} Track Your Amaal`,
+    },
+    tools: {
+      title: "Tools for your daily worship",
+      subtitle:
+        "Simple tools that work right in your browser. You do not need an account to use them.",
+      tasbeehTitle: "Online Tasbeeh Counter",
+      tasbeehText:
+        "Count your dhikr with one big tap button. Choose a target such as 33 or 100, and your progress stays saved on your device.",
+      qazaTitle: "Qaza Prayer Calculator",
+      qazaText:
+        "Estimate how many prayers you need to make up, and how long it may take at your own pace.",
+    },
+    tasbeeh: {
+      title: "Online Tasbeeh Counter",
+      subtitle:
+        "Tap the big button for every dhikr you recite. Pick a target, and the counter tells you when a round is complete. Works on phones, tablets and computers.",
+      howHeading: "How to use the tasbeeh counter",
+      steps: [
+        "Choose the dhikr you are reciting, or pick Any dhikr.",
+        "Set a target such as 33, 99 or 100, or choose No target to count freely.",
+        "Tap the large button once for each recitation. On supported phones it vibrates gently.",
+        "Use Undo if you tapped by mistake, and Reset to start again.",
+      ],
+      note: "Your count is stored only in your browser on this device, so it is still there when you come back.",
+    },
+    qaza: {
+      title: "Qaza Prayer Calculator",
+      subtitle:
+        "Qaza means making up prayers that were missed. Enter the dates to get an estimate of how many prayers you need to make up, and plan how long it may take at your own pace.",
+      howHeading: "How the estimate works",
+      bullets: [
+        "The calculator counts the days between the date prayer became obligatory for you and the date you started praying regularly.",
+        "It removes any days you exclude and any whole days of Qaza you have already made up.",
+        "Each remaining day counts as five daily prayers, plus Witr if you include it.",
+      ],
+      note: "Nothing you enter is sent anywhere. The calculation happens in your browser.",
+    },
+    read: {
+      readNow: "Read Now",
+    },
+    counter: {
+      chooseDhikrAria: "Choose dhikr",
+      anyDhikr: "Any dhikr",
+      ofTarget: (target: number) => `of ${target}`,
+      rounds: (rounds: number) => `Rounds completed: ${rounds}`,
+      total: (total: number) => `Total count: ${total}`,
+      target: "Target",
+      noTarget: "No target",
+      undo: "Undo",
+      reset: "Reset",
+      resetConfirm: "Reset the counter to zero?",
+      roundComplete: (round: number) => `Round ${round} complete`,
+      countAria: (label: string, shown: number) =>
+        `Count one ${label}. Current count ${shown}`,
+      savedOnDevice: "Your count is saved on this device only.",
+      createAccount: "Create an account",
+      savedHint: "to record your daily dhikr and see your progress over time.",
+    },
+    calculator: {
+      startLabel: "Date prayer became obligatory for you",
+      endLabel: "Date you started praying regularly",
+      excludedLabel: "Days to exclude (optional)",
+      excludedHint:
+        "Days on which prayer was not obligatory for you, for example during menstruation.",
+      madeUpLabel: "Days of Qaza already made up (optional)",
+      madeUpHint: "Count whole days, meaning all the prayers of a day.",
+      perDayLabel: "Qaza days you can make up each day",
+      includeWitr: "Include Witr (as in the Hanafi school)",
+      emptyHint: "Choose both dates to see your estimate.",
+      errorDates:
+        "The date you started praying regularly must be after the date prayer became obligatory for you.",
+      estimated: "Estimated Qaza remaining",
+      prayersValue: (prayers: number) => `${prayers} prayers`,
+      daysAndPerDay: (days: number, perDay: number) => `${days} days · ${perDay} prayers a day`,
+      noRemaining: "No Qaza remaining for these dates.",
+      plan: (perDay: number, duration: string) =>
+        `At ${perDay} days of Qaza each day, this would take about ${duration}.`,
+      durationDay: (days: number) => `${days} ${days === 1 ? "day" : "days"}`,
+      durationYear: (years: number) => `${years} ${years === 1 ? "year" : "years"}`,
+      durationMonth: (months: number) => `${months} ${months === 1 ? "month" : "months"}`,
+      witr: "Witr",
+      disclaimer:
+        "This is only an estimate to help you plan. Rulings differ between schools of thought and depend on your situation, so please ask a qualified scholar about your own case.",
+      createAccount: "Create an account",
+      disclaimerTail: "to record your daily prayers and Qaza in Track Your Amaal.",
+    },
+  },
   auth: {
     signInTitle: "Sign In",
     signInSubtitle: "Sign in to view your worship records",

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useI18n } from "@/lib/i18n/client";
 
 const PRESETS = [
   { id: "subhanallah", label: "SubhanAllah", arabic: "سُبْحَانَ ٱللَّٰهِ" },
@@ -24,6 +25,8 @@ function vibrate(pattern: number | number[]) {
 }
 
 export default function TasbeehCounter() {
+  const { t } = useI18n();
+  const copy = t.public.counter;
   const [presetId, setPresetId] = useState<string>(PRESETS[0].id);
   const [target, setTarget] = useState(33);
   const [total, setTotal] = useState(0);
@@ -56,6 +59,9 @@ export default function TasbeehCounter() {
     }
   }, [loaded, presetId, target, total]);
 
+  const presetLabel = (item: (typeof PRESETS)[number]) =>
+    item.id === "any" ? copy.anyDhikr : item.label;
+
   const preset = PRESETS.find((item) => item.id === presetId) ?? PRESETS[0];
   const progress = target > 0 ? total % target : total;
   const rounds = target > 0 ? Math.floor(total / target) : 0;
@@ -67,7 +73,7 @@ export default function TasbeehCounter() {
     setTotal(next);
     if (target > 0 && next % target === 0) {
       vibrate([80, 60, 80]);
-      setMessage(`Round ${next / target} complete`);
+      setMessage(copy.roundComplete(next / target));
     } else {
       vibrate(12);
       setMessage("");
@@ -81,7 +87,7 @@ export default function TasbeehCounter() {
   }
 
   function reset() {
-    if (total > 0 && !window.confirm("Reset the counter to zero?")) return;
+    if (total > 0 && !window.confirm(copy.resetConfirm)) return;
     setTotal(0);
     setMessage("");
   }
@@ -91,7 +97,7 @@ export default function TasbeehCounter() {
 
   return (
     <div className="rounded-2xl border border-[#e3dcc8] bg-white p-5 sm:p-8">
-      <div className="mb-5 flex flex-wrap justify-center gap-2" role="group" aria-label="Choose dhikr">
+      <div className="mb-5 flex flex-wrap justify-center gap-2" role="group" aria-label={copy.chooseDhikrAria}>
         {PRESETS.map((item) => (
           <button
             key={item.id}
@@ -104,7 +110,7 @@ export default function TasbeehCounter() {
                 : "border-[#d9d2bc] bg-white text-[#0b5d4b] hover:border-[#0b5d4b]"
             }`}
           >
-            {item.label}
+            {presetLabel(item)}
           </button>
         ))}
       </div>
@@ -115,17 +121,19 @@ export default function TasbeehCounter() {
             {preset.arabic}
           </p>
         )}
-        <p className="text-sm text-[#66726d]">{preset.label}</p>
+        <p className="text-sm text-[#66726d]">{presetLabel(preset)}</p>
       </div>
 
       <button
         type="button"
         onClick={tap}
-        aria-label={`Count one ${preset.label}. Current count ${shown}`}
-        className={`mx-auto flex h-56 w-56 touch-manipulation select-none flex-col items-center justify-center rounded-full bg-[#0b5d4b] text-white shadow-lg transition-transform active:scale-95 sm:h-64 sm:w-64 ${focusRing}`}
+        aria-label={copy.countAria(presetLabel(preset), shown)}
+        className={`mx-auto flex h-56 w-56 touch-manipulation flex-col items-center justify-center rounded-full bg-[#0b5d4b] text-white shadow-lg transition-transform select-none active:scale-95 sm:h-64 sm:w-64 ${focusRing}`}
       >
         <span className="text-6xl font-bold tabular-nums">{shown}</span>
-        {target > 0 && <span className="mt-1 text-sm text-[#e3cf9a]">of {target}</span>}
+        {target > 0 && (
+          <span className="mt-1 text-sm text-[#e3cf9a]">{copy.ofTarget(target)}</span>
+        )}
       </button>
 
       <p aria-live="polite" className="mt-4 min-h-6 text-center text-base font-semibold text-[#b8963e]">
@@ -133,12 +141,13 @@ export default function TasbeehCounter() {
       </p>
 
       <p className="mb-5 text-center text-sm text-[#66726d]">
-        {target > 0 ? `Rounds completed: ${rounds} · ` : ""}Total count: {total}
+        {target > 0 ? `${copy.rounds(rounds)} · ` : ""}
+        {copy.total(total)}
       </p>
 
       <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
         <label className="flex items-center gap-2 text-sm text-[#3a4a45]">
-          Target
+          {copy.target}
           <select
             value={target}
             onChange={(event) => setTarget(Number(event.target.value))}
@@ -146,7 +155,7 @@ export default function TasbeehCounter() {
           >
             {TARGETS.map((value) => (
               <option key={value} value={value}>
-                {value === 0 ? "No target" : value}
+                {value === 0 ? copy.noTarget : value}
               </option>
             ))}
           </select>
@@ -158,24 +167,24 @@ export default function TasbeehCounter() {
             disabled={total === 0}
             className={`min-h-11 rounded-lg border border-[#0b5d4b] px-5 text-sm font-semibold text-[#0b5d4b] hover:bg-[#f6f3ea] disabled:opacity-40 ${focusRing}`}
           >
-            Undo
+            {copy.undo}
           </button>
           <button
             type="button"
             onClick={reset}
             className={`min-h-11 rounded-lg border border-[#a33a2a] px-5 text-sm font-semibold text-[#a33a2a] hover:bg-[#fbeeee] ${focusRing}`}
           >
-            Reset
+            {copy.reset}
           </button>
         </div>
       </div>
 
       <p className="mt-6 text-center text-xs text-[#66726d]">
-        Your count is saved on this device only.{" "}
+        {copy.savedOnDevice}{" "}
         <Link href="/register" className="font-medium text-[#0b5d4b] underline">
-          Create an account
+          {copy.createAccount}
         </Link>{" "}
-        to record your daily dhikr and see your progress over time.
+        {copy.savedHint}
       </p>
     </div>
   );
